@@ -74,6 +74,27 @@ class CoreTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             core.generate_ready_valid_sva("tx", "clk", "valid", "ready", "payload[7:0]")
 
+    def test_uvm_agent_skeleton_contains_standard_components(self):
+        fields = [
+            {"name": "valid"},
+            {"name": "payload", "width": 128},
+            {"name": "opcode", "width": 4, "signed": False},
+        ]
+        result = core.generate_uvm_agent_skeleton("fdi_tx", "fdi_if", json.dumps(fields))
+        self.assertIn("class fdi_tx_item extends uvm_sequence_item", result)
+        self.assertIn("class fdi_tx_sequencer extends uvm_sequencer", result)
+        self.assertIn("class fdi_tx_driver extends uvm_driver", result)
+        self.assertIn("class fdi_tx_monitor extends uvm_monitor", result)
+        self.assertIn("class fdi_tx_agent extends uvm_agent", result)
+        self.assertIn("uvm_field_int(payload, UVM_DEFAULT)", result)
+        self.assertIn("virtual fdi_if vif", result)
+        self.assertIn("TODO: implement run_phase", result)
+
+    def test_uvm_agent_skeleton_rejects_duplicate_fields(self):
+        fields = [{"name": "data", "width": 8}, {"name": "data", "width": 16}]
+        with self.assertRaises(ValueError):
+            core.generate_uvm_agent_skeleton("tx", "link_if", json.dumps(fields))
+
     def test_uvm_plan_keeps_todos(self):
         plan = core.generate_uvm_testplan(json.dumps([{"id": "F1", "name": "Retry", "source_refs": ["UCIe clause TBD"]}]))
         self.assertIn("F1_NOMINAL", plan)
