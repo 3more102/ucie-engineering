@@ -104,7 +104,7 @@ When the UCIe Engineering MCP server is connected, use its helpers where appropr
 - SVA skeleton generation with explicit overlapped/non-overlapped timing.
 - Generic ready/valid hold-assertion generation, only after confirming the interface contract.
 - UVM agent class scaffolding from an explicit interface type and transaction field list.
-- Generic source/sink ready-valid contract validation and UVM interface/agent generation from explicit signal names, widths, and clock edges; reset and UCIe-specific behavior are deliberately excluded.
+- Generic source/sink ready-valid contract validation, UVM interface/agent generation, and stall SVA include generation from explicit signal names, widths, and clock edges; reset and UCIe-specific behavior are deliberately excluded.
 - UVM test-plan drafting from explicit feature records.
 - Traceability-field audit.
 - Generic CRC-16/CCITT-FALSE reference calculation.

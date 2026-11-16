@@ -489,7 +489,7 @@ def generate_ready_valid_uvm_agent(contract_json: str) -> dict[str, Any]:
             "endproperty",
             f"assert property ({prop});",
         ])
-    assertions_sv = "\\n".join(assertion_lines) + "\\n"
+    assertions_sv = "\n".join(assertion_lines) + "\n"
     interface_sv = "\n".join([
         "// Generic ready/valid interface generated from the supplied contract; verify before integration.",
         f"interface {interface_name}(input logic {clock});",

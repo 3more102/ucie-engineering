@@ -29,7 +29,7 @@ Provide an explicit JSON contract based on your approved interface definition. T
 }
 ~~~
 
-The validator checks structure. The generator returns a SystemVerilog interface and a UVM package. Source agents drive valid/payload while waiting for ready; sink agents drive ready and monitor incoming payload. Reset, timeout, packet framing, CRC, retry/replay, credits, and UCIe-specific FDI/RDI behavior are not generated. Review, compile, and simulate generated code before integration.
+The validator checks structure. The generator returns a SystemVerilog interface, a UVM package, and an SVA include fragment checking valid persistence and per-field payload stability after a sampled stall. Source agents drive valid/payload while waiting for ready; sink agents drive ready and monitor incoming payload. Reset, timeout, packet framing, CRC, retry/replay, credits, and UCIe-specific FDI/RDI behavior are not generated. Review, compile, and simulate generated code before integration.
 
 Run core tests:
 
