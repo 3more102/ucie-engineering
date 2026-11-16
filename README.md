@@ -51,7 +51,7 @@ The command creates:
 - dist/ucie-claude-engineering-source.zip — editable source archive.
 - dist/SHA256SUMS.txt — release checksums.
 
-These generated archives are intentionally excluded from Git. Attach them to a GitHub Release after validation.
+These generated archives are intentionally excluded from Git. CI also builds and uploads them as a downloadable workflow artifact. Attach them to a GitHub Release after validation.
 
 ## Install
 
@@ -85,7 +85,9 @@ The tools are deterministic drafting and audit utilities. They do not inspect pr
 
 ## Validation status
 
-GitHub Actions runs unit tests on Python 3.11, 3.12, and 3.13, compiles Python sources, validates JSON inputs, and builds release archives. The MCP SDK integration and installation in Claude Desktop require a separate runtime smoke test.
+GitHub Actions passed on Python 3.11, 3.12, and 3.13: 13/13 core unit tests on each version. Python compilation, JSON validation, official MCPB CLI validation/packaging, and an MCP SDK runtime import/tool-registration smoke test also passed. The Skill, MCPB, source ZIP, and checksums were uploaded as the workflow artifact named ucie-engineering-v1.0.0.
+
+A live installation and end-to-end tool invocation in Claude Desktop remains a manual host-application check.
 
 ## License
 
