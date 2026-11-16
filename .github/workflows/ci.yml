@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "feat/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run core unit tests
+        working-directory: mcp-server
+        env:
+          PYTHONPATH: .
+        run: python -m unittest discover -s tests -v
+      - name: Compile Python sources
+        run: python -m compileall -q mcp-server/ucie_mcp skill/ucie-engineering/scripts scripts
+      - name: Validate JSON manifests and examples
+        run: |
+          python -c "import json,pathlib; files=list(pathlib.Path('.').rglob('*.json')) + list(pathlib.Path('.').rglob('manifest.json')); [json.loads(p.read_text(encoding='utf-8')) for p in files if '.git' not in p.parts]; print(f'Validated {len(files)} JSON files')"
+      - name: Build release archives
+        run: python scripts/build_release.py
