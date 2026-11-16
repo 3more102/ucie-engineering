@@ -103,6 +103,7 @@ When the UCIe Engineering MCP server is connected, use its helpers where appropr
 - Declaration-only SystemVerilog shell generation.
 - SVA skeleton generation with explicit overlapped/non-overlapped timing.
 - Generic ready/valid hold-assertion generation, only after confirming the interface contract.
+- UVM agent class scaffolding from an explicit interface type and transaction field list; generated driver/monitor behavior remains TODO.
 - UVM test-plan drafting from explicit feature records.
 - Traceability-field audit.
 - Generic CRC-16/CCITT-FALSE reference calculation.
