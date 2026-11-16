@@ -55,3 +55,16 @@ Input: rows_json array with requirement_id, source_ref, design_ref, test_id, res
 Tool: ucie_crc16_ccitt_false
 
 Calculates generic CRC-16/CCITT-FALSE: width 16, polynomial 0x1021, initial value 0xFFFF, refin/refout false, xorout 0x0000. The check vector ASCII 123456789 yields 0x29B1. This is not a UCIe-specific CRC implementation.
+
+
+## Contract-driven generic ready/valid UVM agent
+
+Tools:
+- ucie_validate_ready_valid_contract
+- ucie_generate_ready_valid_uvm_agent
+
+Input is one JSON contract containing schema_version, interface_name, agent_name, clock, drive_edge, sample_edge, role (source or sink), valid, ready, payload fields (name, width, optional signed), and optional source_ref.
+
+The validator checks identifiers, unique signal names, payload widths, role, and distinct drive/sample edges. A missing source_ref is a warning. The generator returns two source files: a SystemVerilog interface with clocking blocks and modports, and a UVM package containing a transaction, one-item smoke sequence, sequencer, driver, monitor, and agent. A source agent drives valid and payload while waiting for ready; a sink agent drives ready according to sequence items. The monitor publishes observed payload transactions on valid && ready.
+
+This is a generic single-clock ready/valid template, not a UCIe FDI/RDI implementation. Reset handling, timeout policy, packet framing, CRC, retry/replay, credits, ordering, and protocol-specific semantics are not generated. The helper rejects a non-empty reset declaration rather than silently ignoring it. The generated SystemVerilog is not compiled or simulated by the tool. Compile the interface before the package, configure the virtual interface from the testbench, and review all behavior against the controlled project contract before integration.
