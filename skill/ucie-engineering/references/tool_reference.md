@@ -32,6 +32,12 @@ Tool: ucie_generate_ready_valid_sva
 
 Inputs: prefix, clock, valid, ready, payload, and optional disable_iff. Generates two generic assertions: valid remains asserted after a sampled valid && !ready stall, and payload is stable at the next sample. This is a reusable ready/valid contract template, not a UCIe FDI/RDI definition or normative UCIe requirement. Confirm the interface semantics before use.
 
+## UVM agent scaffold
+
+Tool: ucie_generate_uvm_agent_skeleton
+
+Inputs: agent_name, interface_type, and fields_json. Generates transaction, smoke sequence, sequencer, driver, monitor, and agent class shells, plus virtual-interface configuration plumbing. The field model is limited to simple integral fields with explicit widths. Driver pin-driving and monitor sampling are TODOs; this is not a complete or compiled UVM environment. The interface type and semantics must be supplied and verified by the project.
+
 ## UVM test plan
 
 Tool: ucie_generate_uvm_testplan
