@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0",
+  "project": {
+    "name": "UCIe Reliable Adapter Research Project",
+    "objective": "Design and verify a reliable die-to-die adapter with reproducible engineering evidence."
+  },
+  "baseline": {
+    "standard": "UCIe",
+    "revision": "3.0",
+    "specification_source": "Project-authorized UCIe 3.0 specification copy; confirm exact publication and revision.",
+    "source_status": "requires_project_confirmation"
+  },
+  "scope": {
+    "in_scope": [
+      "Die-to-Die Adapter layer",
+      "FDI contract and RDI boundary",
+      "2D package baseline",
+      "CRC/retry/replay and credit flow where required by selected configuration"
+    ],
+    "out_of_scope": [
+      "Custom PHY analog implementation unless separately approved",
+      "Unselected optional protocol modes"
+    ]
+  },
+  "interfaces": [
+    {"name": "FDI", "status": "to_be_specified", "source_ref": "TBD"},
+    {"name": "RDI", "status": "to_be_specified", "source_ref": "TBD"}
+  ],
+  "verification": {
+    "methodology": "SystemVerilog Assertions and UVM",
+    "levels": ["block", "interface", "adapter integration"],
+    "simulator": "Questa; confirm version and configuration"
+  },
+  "implementation_targets": {
+    "asic": true,
+    "fpga": true
+  }
+}
