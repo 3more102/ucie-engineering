@@ -24,6 +24,10 @@ Choose components based on interface complexity:
 
 Keep the reference model independent enough to detect design errors. Document any shared assumptions or reused code.
 
+### Contract-driven ready/valid scaffolding
+
+A generic source/sink ready-valid agent may be generated only from an explicit contract that supplies the interface name, agent name, clock, distinct drive/sample edges, role, valid/ready signal names, and payload field names/widths. The source role drives valid and payload and observes ready; the sink role drives ready and observes valid/payload. The monitor records a transfer only when valid and ready are sampled high together. The generated templates do not implement reset, timeout, packet framing, CRC, retry/replay, credits, or UCIe-specific behavior. They are scaffolding, not normative FDI/RDI models; verify them against the controlled interface specification and compile/simulate them in the target UVM environment.
+
 ## Test classes
 
 - Directed nominal tests.
