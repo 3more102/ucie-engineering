@@ -88,7 +88,9 @@ python -m unittest discover -s tests -v
 - ucie_generate_sv_module_shell
 - ucie_generate_sva_skeleton — explicit overlapped/non-overlapped implication.
 - ucie_generate_ready_valid_sva — generic next-cycle valid/payload hold assertions.
-- ucie_generate_uvm_agent_skeleton — transaction, sequence, sequencer, driver, monitor and agent class shells.
+- ucie_generate_uvm_agent_skeleton — basic UVM class shells.
+- ucie_validate_ready_valid_contract — validate an explicit generic ready/valid contract.
+- ucie_generate_ready_valid_uvm_agent — generate source/sink interface and UVM agent files from that contract.
 - ucie_generate_uvm_testplan
 - ucie_audit_traceability_matrix
 - ucie_crc16_ccitt_false
@@ -97,7 +99,7 @@ The tools are deterministic drafting and audit utilities. They do not inspect pr
 
 ## Validation status
 
-GitHub Actions validates Python 3.11, 3.12, and 3.13, runs unit tests, compiles Python sources, validates JSON inputs, checks MCPB packaging, and smoke-tests both package import and the direct-file import path used by MCP Inspector. The workflow artifact is named ucie-engineering-v1.2.0.
+GitHub Actions validates Python 3.11, 3.12, and 3.13, runs unit tests, compiles Python sources, validates JSON inputs, checks MCPB packaging, and smoke-tests both package import and the direct-file import path used by MCP Inspector. The workflow artifact is named ucie-engineering-v1.3.0.
 
 ## License
 
