@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0 — 2026-11-16
+
+- Added UVM agent class scaffolding for transaction, sequence, sequencer, driver, monitor, and agent.
+- Added regression coverage for generated class structure and duplicate transaction-field rejection.
+- Bumped MCP package and bundle version to 1.2.0.
+
+
 ## 1.1.0 — 2026-11-16
 
 - Added explicit overlapped/non-overlapped SVA implication selection.
