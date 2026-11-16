@@ -24,7 +24,13 @@ Inputs: module_name and ports_json. Port records require name and direction (inp
 
 Tool: ucie_generate_sva_skeleton
 
-Inputs: property_name, clock, antecedent, consequent, and optional disable_iff. Expressions must be taken from the verified design contract. Output is a starting point, not a proof.
+Inputs: property_name, clock, antecedent, consequent, optional disable_iff, and implication. The implication is either |-> (overlapped, same sampled cycle) or |=> (non-overlapped, next sampled cycle). Use |=> when the intended check begins on the following clock, such as checking that a stalled ready/valid payload remains stable into the next sample. Confirm the temporal behavior against the interface contract.
+
+## Generic ready/valid assertions
+
+Tool: ucie_generate_ready_valid_sva
+
+Inputs: prefix, clock, valid, ready, payload, and optional disable_iff. Generates two generic assertions: valid remains asserted after a sampled valid && !ready stall, and payload is stable at the next sample. This is a reusable ready/valid contract template, not a UCIe FDI/RDI definition or normative UCIe requirement. Confirm the interface semantics before use.
 
 ## UVM test plan
 

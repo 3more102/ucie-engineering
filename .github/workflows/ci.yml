@@ -37,6 +37,8 @@ jobs:
           npm install -g @anthropic-ai/mcpb
           mcpb validate mcp-server/manifest.json
           mcpb pack mcp-server dist/ucie-engineering.mcpb
+      - name: Refresh checksums after final MCPB packaging
+        run: python scripts/write_checksums.py
       - uses: astral-sh/setup-uv@v5
         if: matrix.python-version == '3.11'
         with:
@@ -46,11 +48,21 @@ jobs:
         working-directory: mcp-server
         run: |
           uv sync
-          uv run python -c "from ucie_mcp.server import mcp; print('MCP server import and tool registration OK')"
+          uv run python -c "from ucie_mcp.server import mcp; print('MCP package import and tool registration OK')"
+          uv run python - <<'PY'
+          import importlib.util
+          from pathlib import Path
+          server_path = Path("ucie_mcp/server.py")
+          spec = importlib.util.spec_from_file_location("server_module", server_path)
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          assert module.mcp is not None
+          print("MCP Inspector direct-file import OK")
+          PY
       - uses: actions/upload-artifact@v4
         if: matrix.python-version == '3.11'
         with:
-          name: ucie-engineering-v1.0.0
+          name: ucie-engineering-v1.1.0
           path: |
             dist/ucie-engineering-skill.zip
             dist/ucie-engineering.mcpb

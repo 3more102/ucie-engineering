@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.0 — 2026-11-16
+
+- Added explicit overlapped/non-overlapped SVA implication selection.
+- Added generic ready/valid hold assertions using next-sample semantics.
+- Fixed MCP Inspector direct-file import mode.
+- Recompute SHA-256 checksums after official MCPB packaging in CI.
+- Added regression tests for temporal operator selection and ready/valid hold properties.
+- Bumped MCP package and bundle version to 1.1.0.
+
 ## 1.0.0 — 2026-11-16
 
 - Initial UCIe Engineering Claude Skill and local MCP server.

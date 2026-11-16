@@ -3,12 +3,22 @@ from __future__ import annotations
 
 import json
 import logging
+import sys
+from pathlib import Path
+
 from mcp.server import MCPServer
-from . import core
+
+# The MCP Inspector loads this file directly with importlib, without package
+# context. Add the package root only in that direct-file execution mode.
+if __package__:
+    from . import core
+else:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from ucie_mcp import core
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("ucie-engineering")
-mcp = MCPServer("ucie-engineering", version="1.0.0")
+mcp = MCPServer("ucie-engineering", version="1.1.0")
 
 
 def _json_result(function, *args):
@@ -40,10 +50,35 @@ def ucie_generate_sv_module_shell(module_name: str, ports_json: str) -> str:
 
 
 @mcp.tool()
-def ucie_generate_sva_skeleton(property_name: str, clock: str, antecedent: str, consequent: str, disable_iff: str = "") -> str:
-    """Generate a single-clock SVA skeleton from user-supplied expressions; verify reset and timing semantics."""
+def ucie_generate_sva_skeleton(
+    property_name: str,
+    clock: str,
+    antecedent: str,
+    consequent: str,
+    disable_iff: str = "",
+    implication: str = "|->",
+) -> str:
+    """Generate an SVA skeleton using overlapped |-> or non-overlapped |=> implication."""
     try:
-        return core.generate_sva_skeleton(property_name, clock, antecedent, consequent, disable_iff)
+        return core.generate_sva_skeleton(
+            property_name, clock, antecedent, consequent, disable_iff, implication
+        )
+    except (ValueError, TypeError) as exc:
+        return json.dumps({"status": "error", "error": str(exc)}, indent=2)
+
+
+@mcp.tool()
+def ucie_generate_ready_valid_sva(
+    prefix: str,
+    clock: str,
+    valid: str,
+    ready: str,
+    payload: str,
+    disable_iff: str = "",
+) -> str:
+    """Generate generic ready/valid hold assertions; this is not a UCIe interface definition."""
+    try:
+        return core.generate_ready_valid_sva(prefix, clock, valid, ready, payload, disable_iff)
     except (ValueError, TypeError) as exc:
         return json.dumps({"status": "error", "error": str(exc)}, indent=2)
 

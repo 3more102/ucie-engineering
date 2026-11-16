@@ -35,6 +35,12 @@ def _single_line(value: str, label: str, limit: int = 1000) -> str:
     return value
 
 
+def _disable_iff(value: str) -> str:
+    if not isinstance(value, str) or len(value) > 500 or "\n" in value or "\r" in value:
+        raise ValueError("disable_iff must be a single-line string of at most 500 characters.")
+    return value.strip()
+
+
 def validate_project_manifest(manifest_json: str) -> dict[str, Any]:
     data = _load_json(manifest_json, "manifest_json")
     if not isinstance(data, dict):
@@ -172,19 +178,61 @@ def generate_sv_module_shell(module_name: str, ports_json: str) -> str:
     )
 
 
-def generate_sva_skeleton(property_name: str, clock: str, antecedent: str, consequent: str, disable_iff: str = "") -> str:
+def generate_sva_skeleton(
+    property_name: str,
+    clock: str,
+    antecedent: str,
+    consequent: str,
+    disable_iff: str = "",
+    implication: str = "|->",
+) -> str:
     property_name = _identifier(property_name, "property_name")
     clock = _identifier(clock, "clock")
     antecedent = _single_line(antecedent, "antecedent")
     consequent = _single_line(consequent, "consequent")
-    if not isinstance(disable_iff, str) or len(disable_iff) > 500 or "\n" in disable_iff or "\r" in disable_iff:
-        raise ValueError("disable_iff must be a single-line string of at most 500 characters.")
-    disable = f"\n        disable iff ({disable_iff.strip()})" if disable_iff.strip() else ""
+    disable_iff = _disable_iff(disable_iff)
+    if implication not in ("|->", "|=>"):
+        raise ValueError("implication must be either '|->' (overlapped) or '|=>' (non-overlapped).")
+    disable = f"\n        disable iff ({disable_iff})" if disable_iff else ""
     return (
         f"property {property_name};\n"
         f"    @(posedge {clock}){disable}\n"
-        f"        ({antecedent}) |-> ({consequent});\n"
+        f"        ({antecedent}) {implication} ({consequent});\n"
         f"endproperty\n\nassert property ({property_name});\n"
+    )
+
+
+def generate_ready_valid_sva(
+    prefix: str,
+    clock: str,
+    valid: str,
+    ready: str,
+    payload: str,
+    disable_iff: str = "",
+) -> str:
+    """Generate generic ready/valid hold assertions; this is not a UCIe interface definition."""
+    prefix = _identifier(prefix, "prefix")
+    clock = _identifier(clock, "clock")
+    valid = _identifier(valid, "valid")
+    ready = _identifier(ready, "ready")
+    payload = _identifier(payload, "payload")
+    disable_iff = _disable_iff(disable_iff)
+    disable = f"\n        disable iff ({disable_iff})" if disable_iff else ""
+    stalled = f"({valid} && !{ready})"
+    valid_property = f"p_{prefix}_valid_held_while_stalled"
+    payload_property = f"p_{prefix}_payload_stable_while_stalled"
+    return (
+        "// Generic ready/valid contract template; confirm it matches the approved interface.\n"
+        f"property {valid_property};\n"
+        f"    @(posedge {clock}){disable}\n"
+        f"        {stalled} |=> {valid};\n"
+        "endproperty\n"
+        f"assert property ({valid_property});\n\n"
+        f"property {payload_property};\n"
+        f"    @(posedge {clock}){disable}\n"
+        f"        {stalled} |=> $stable({payload});\n"
+        "endproperty\n"
+        f"assert property ({payload_property});\n"
     )
 
 

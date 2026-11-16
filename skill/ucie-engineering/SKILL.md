@@ -66,7 +66,8 @@ Do not assume that every candidate feature is mandatory or applicable.
 - Build UVM agents around the actual interface contract; include sequencer, driver, monitor, transaction, scoreboard/reference model, and coverage only where useful.
 - Separate directed, constrained-random, negative/error, reset/power, stress, and regression testing.
 - Derive boundary tests from documented limits; never invent legal limits.
-- Add SVA for handshake stability, no overflow/underflow, ordering, bounded response where a bound exists, mutual exclusion, reset behavior, and legal state transitions.
+- Add SVA for handshake stability, no overflow/underflow, credit conservation, ordering, bounded response where a bound exists, mutual exclusion, reset behavior, and legal state transitions.
+- For a generic ready/valid interface, the template checks valid persistence and payload stability on the next sampled clock after a stall. Confirm that this contract applies before reusing it for FDI or RDI.
 - Define functional coverage from requirements. Keep code, assertion, functional, mutation/fault-injection, and specification coverage distinct.
 - Record simulator version, compile options, seed, tests, timeout, source revision, logs, and acceptance criteria.
 
@@ -100,7 +101,8 @@ When the UCIe Engineering MCP server is connected, use its helpers where appropr
 - Manifest validation.
 - Architecture input completeness review.
 - Declaration-only SystemVerilog shell generation.
-- SVA skeleton generation from user-provided expressions.
+- SVA skeleton generation with explicit overlapped/non-overlapped timing.
+- Generic ready/valid hold-assertion generation, only after confirming the interface contract.
 - UVM test-plan drafting from explicit feature records.
 - Traceability-field audit.
 - Generic CRC-16/CCITT-FALSE reference calculation.

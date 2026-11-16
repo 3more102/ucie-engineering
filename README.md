@@ -8,7 +8,8 @@ A source-grounded engineering assistant for UCIe die-to-die adapter architecture
 - skill/ucie-engineering/references/ — architecture, verification, source control, implementation, and publication guidance.
 - mcp-server/ — local Python MCP server and deterministic engineering utilities.
 - docs/ — installation and security guidance.
-- scripts/build_release.py — creates the uploadable Skill ZIP, MCPB bundle, source archive, and SHA-256 manifest.
+- scripts/build_release.py — creates the uploadable Skill ZIP, MCPB bundle, source archive, and initial SHA-256 manifest.
+- scripts/write_checksums.py — recomputes checksums after final MCPB packaging.
 
 ## Baseline policy
 
@@ -35,6 +36,7 @@ Official links:
 - Treat FDI and RDI as distinct interface contracts.
 - Do not claim standards compliance from generated RTL, lint, unit tests, or a partial simulation.
 - The generic CRC-16/CCITT-FALSE utility is not a UCIe CRC implementation.
+- The generic ready/valid SVA helper is a contract template, not a UCIe-specific interface definition.
 - Do not reproduce copyrighted specification text; use an authorized copy and cite precise locations.
 
 ## Build release artifacts
@@ -47,11 +49,19 @@ python scripts/build_release.py
 
 The command creates:
 - dist/ucie-engineering-skill.zip — uploadable Claude Agent Skill.
-- dist/ucie-engineering.mcpb — Claude Desktop MCP Bundle.
+- dist/ucie-engineering.mcpb — MCP bundle staging archive.
 - dist/ucie-claude-engineering-source.zip — editable source archive.
-- dist/SHA256SUMS.txt — release checksums.
+- dist/SHA256SUMS.txt — checksums for the artifacts produced by the builder.
 
-These generated archives are intentionally excluded from Git. CI also builds and uploads them as a downloadable workflow artifact. Attach them to a GitHub Release after validation.
+For a final distribution package, validate and repack the MCPB with the official CLI, then refresh the checksums:
+
+~~~bash
+mcpb validate mcp-server/manifest.json
+mcpb pack mcp-server dist/ucie-engineering.mcpb
+python scripts/write_checksums.py
+~~~
+
+CI performs these steps in this order and uploads the final packages as a workflow artifact. Attach validated packages to a GitHub Release after review.
 
 ## Install
 
@@ -76,7 +86,8 @@ python -m unittest discover -s tests -v
 - ucie_validate_project_manifest
 - ucie_review_architecture_inputs
 - ucie_generate_sv_module_shell
-- ucie_generate_sva_skeleton
+- ucie_generate_sva_skeleton — explicit overlapped/non-overlapped implication.
+- ucie_generate_ready_valid_sva — generic next-cycle valid/payload hold assertions.
 - ucie_generate_uvm_testplan
 - ucie_audit_traceability_matrix
 - ucie_crc16_ccitt_false
@@ -85,9 +96,7 @@ The tools are deterministic drafting and audit utilities. They do not inspect pr
 
 ## Validation status
 
-GitHub Actions passed on Python 3.11, 3.12, and 3.13: 13/13 core unit tests on each version. Python compilation, JSON validation, official MCPB CLI validation/packaging, and an MCP SDK runtime import/tool-registration smoke test also passed. The Skill, MCPB, source ZIP, and checksums were uploaded as the workflow artifact named ucie-engineering-v1.0.0.
-
-A live installation and end-to-end tool invocation in Claude Desktop remains a manual host-application check.
+GitHub Actions validates Python 3.11, 3.12, and 3.13, runs unit tests, compiles Python sources, validates JSON inputs, checks MCPB packaging, and smoke-tests both package import and the direct-file import path used by MCP Inspector. The workflow artifact is named ucie-engineering-v1.1.0.
 
 ## License
 

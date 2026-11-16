@@ -11,6 +11,15 @@
     "clock": "clk",
     "antecedent": "valid && !ready",
     "consequent": "$stable(payload)",
+    "disable_iff": "!rst_n",
+    "implication": "|=>"
+  },
+  "ready_valid_sva": {
+    "prefix": "fdi_tx",
+    "clock": "clk",
+    "valid": "valid",
+    "ready": "ready",
+    "payload": "payload",
     "disable_iff": "!rst_n"
   },
   "crc16_ccitt_false_input": "313233343536373839"

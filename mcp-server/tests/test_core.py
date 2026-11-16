@@ -47,10 +47,32 @@ class CoreTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             core.generate_sv_module_shell("m", json.dumps(ports))
 
-    def test_sva_skeleton(self):
+    def test_sva_skeleton_defaults_to_overlapped_implication(self):
         result = core.generate_sva_skeleton("p_stable", "clk", "valid && !ready", "$stable(data)", "!rst_n")
         self.assertIn("disable iff (!rst_n)", result)
         self.assertIn("(valid && !ready) |-> ($stable(data))", result)
+
+    def test_sva_skeleton_supports_non_overlapped_implication(self):
+        result = core.generate_sva_skeleton(
+            "p_stable", "clk", "valid && !ready", "$stable(data)", "!rst_n", "|=>"
+        )
+        self.assertIn("(valid && !ready) |=> ($stable(data))", result)
+
+    def test_sva_skeleton_rejects_unknown_implication(self):
+        with self.assertRaises(ValueError):
+            core.generate_sva_skeleton("p_bad", "clk", "a", "b", implication="|>>")
+
+    def test_ready_valid_sva_checks_next_cycle_hold(self):
+        result = core.generate_ready_valid_sva(
+            "fdi_tx", "clk", "valid", "ready", "payload", "!rst_n"
+        )
+        self.assertIn("(valid && !ready) |=> valid;", result)
+        self.assertIn("(valid && !ready) |=> $stable(payload);", result)
+        self.assertEqual(result.count("disable iff (!rst_n)"), 2)
+
+    def test_ready_valid_sva_rejects_expression_in_signal_name(self):
+        with self.assertRaises(ValueError):
+            core.generate_ready_valid_sva("tx", "clk", "valid", "ready", "payload[7:0]")
 
     def test_uvm_plan_keeps_todos(self):
         plan = core.generate_uvm_testplan(json.dumps([{"id": "F1", "name": "Retry", "source_refs": ["UCIe clause TBD"]}]))
