@@ -37,3 +37,22 @@ jobs:
           npm install -g @anthropic-ai/mcpb
           mcpb validate mcp-server/manifest.json
           mcpb pack mcp-server dist/ucie-engineering.mcpb
+      - uses: astral-sh/setup-uv@v5
+        if: matrix.python-version == '3.11'
+        with:
+          enable-cache: true
+      - name: Install and smoke-test MCP runtime
+        if: matrix.python-version == '3.11'
+        working-directory: mcp-server
+        run: |
+          uv sync
+          uv run python -c "from ucie_mcp.server import mcp; print('MCP server import and tool registration OK')"
+      - uses: actions/upload-artifact@v4
+        if: matrix.python-version == '3.11'
+        with:
+          name: ucie-engineering-v1.0.0
+          path: |
+            dist/ucie-engineering-skill.zip
+            dist/ucie-engineering.mcpb
+            dist/ucie-claude-engineering-source.zip
+            dist/SHA256SUMS.txt
