@@ -474,6 +474,22 @@ def generate_ready_valid_uvm_agent(contract_json: str) -> dict[str, Any]:
             "        vif.drv_cb.ready <= req_item.ready;", "        @(vif.mon_cb);",
             "        seq_item_port.item_done();", "      end"
         ]
+    assertion_lines = [
+        "// SVA include fragment: place inside the generated interface or another module/interface scope.",
+        f"property p_{agent_name}_valid_held_while_stalled;",
+        f"  @({sample_edge} {clock}) ({valid} && !{ready}) |=> {valid};",
+        "endproperty",
+        f"assert property (p_{agent_name}_valid_held_while_stalled);",
+    ]
+    for field in payload:
+        prop = f"p_{agent_name}_{field['name']}_stable_while_stalled"
+        assertion_lines.extend([
+            f"property {prop};",
+            f"  @({sample_edge} {clock}) ({valid} && !{ready}) |=> $stable({field['name']});",
+            "endproperty",
+            f"assert property ({prop});",
+        ])
+    assertions_sv = "\\n".join(assertion_lines) + "\\n"
     interface_sv = "\n".join([
         "// Generic ready/valid interface generated from the supplied contract; verify before integration.",
         f"interface {interface_name}(input logic {clock});",
@@ -544,6 +560,7 @@ def generate_ready_valid_uvm_agent(contract_json: str) -> dict[str, Any]:
         "status": "generated", "interface_name": interface_name, "agent_name": agent_name, "role": role,
         "interface_file": f"{interface_name}.sv", "interface_sv": interface_sv,
         "package_file": f"{package}.sv", "package_sv": "\n".join(package_lines),
+        "assertions_file": f"{agent_name}_contract_assertions.svh", "assertions_sv": assertions_sv,
         "warnings": warnings, "source_ref": data.get("source_ref") or None,
         "limitations": [
             "Generic single-clock ready/valid scaffold only; not a UCIe FDI/RDI implementation.",

@@ -151,6 +151,14 @@ class CoreTests(unittest.TestCase):
         self.assertIn("while (vif.mon_cb.ready !== 1'b1)", result["package_sv"])
         self.assertIn("analysis_port.write(observed);", result["package_sv"])
 
+    def test_ready_valid_uvm_generation_includes_stall_assertions(self):
+        result = core.generate_ready_valid_uvm_agent(json.dumps(self._ready_valid_contract("source")))
+        self.assertIn("p_fdi_tx_valid_held_while_stalled", result["assertions_sv"])
+        self.assertIn("(valid && !ready) |=> valid;", result["assertions_sv"])
+        self.assertIn("$stable(flit)", result["assertions_sv"])
+        self.assertIn("$stable(opcode)", result["assertions_sv"])
+        self.assertEqual(result["assertions_file"], "fdi_tx_contract_assertions.svh")
+
     def test_ready_valid_uvm_sink_agent_generation(self):
         result = core.generate_ready_valid_uvm_agent(json.dumps(self._ready_valid_contract("sink")))
         self.assertIn("output ready;", result["interface_sv"])
