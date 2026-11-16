@@ -4,6 +4,7 @@
 
 - Hardened the release source archive to include only files committed in the Git tree, excluding untracked workspace files such as local `.env` files.
 - Added a regression test using a temporary Git repository containing tracked files, an untracked `.env`, and untracked notes.
+- Aligned the MCP runtime server version with the manifest and Python package; added a CI metadata-consistency regression test.
 - Bumped MCP package and bundle version to 1.3.2.
 
 

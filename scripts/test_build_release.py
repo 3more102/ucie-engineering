@@ -8,6 +8,23 @@ import build_release
 
 
 class ReleaseArchiveTests(unittest.TestCase):
+    def test_release_metadata_versions_are_consistent(self):
+        root = build_release.ROOT
+        manifest_version = __import__("json").loads(
+            (root / "mcp-server" / "manifest.json").read_text(encoding="utf-8")
+        )["version"]
+        pyproject = (root / "mcp-server" / "pyproject.toml").read_text(encoding="utf-8")
+        package_init = (root / "mcp-server" / "ucie_mcp" / "__init__.py").read_text(encoding="utf-8")
+        server = (root / "mcp-server" / "ucie_mcp" / "server.py").read_text(encoding="utf-8")
+        readme = (root / "mcp-server" / "README.md").read_text(encoding="utf-8")
+        workflow = (root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+        version = manifest_version
+        self.assertIn(f'version = "{version}"', pyproject)
+        self.assertIn(f'__version__ = "{version}"', package_init)
+        self.assertIn(f'version="{version}"', server)
+        self.assertIn(f"Version {version}", readme)
+        self.assertIn(f"name: ucie-engineering-v{version}", workflow)
+
     def test_source_archive_contains_only_committed_files(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

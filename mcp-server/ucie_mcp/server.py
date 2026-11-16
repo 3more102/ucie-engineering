@@ -18,7 +18,7 @@ else:
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("ucie-engineering")
-mcp = MCPServer("ucie-engineering", version="1.3.1")
+mcp = MCPServer("ucie-engineering", version="1.3.2")
 
 
 def _json_result(function, *args):
