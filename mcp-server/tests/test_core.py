@@ -169,6 +169,29 @@ class CoreTests(unittest.TestCase):
         self.assertIn("vif.drv_cb.ready <= req_item.ready;", result["package_sv"])
         self.assertIn("observed.ready = vif.mon_cb.ready;", result["package_sv"])
 
+    def test_ready_valid_uvm_generator_uses_custom_signal_names(self):
+        contract = self._ready_valid_contract("source")
+        contract["clock"] = "link_clk"
+        contract["valid"] = "tx_valid"
+        contract["ready"] = "tx_ready"
+        contract["payload"][0]["name"] = "tx_flit"
+        result = core.generate_ready_valid_uvm_agent(json.dumps(contract))
+        self.assertIn("vif.drv_cb.tx_valid <= 1'b1;", result["package_sv"])
+        self.assertIn("vif.mon_cb.tx_ready !== 1'b1", result["package_sv"])
+        self.assertIn("vif.mon_cb.tx_valid === 1'b1", result["package_sv"])
+        self.assertIn("vif.drv_cb.tx_flit <= req_item.tx_flit;", result["package_sv"])
+        self.assertIn("@(negedge link_clk)", result["interface_sv"])
+
+    def test_ready_valid_sink_uses_custom_handshake_names(self):
+        contract = self._ready_valid_contract("sink")
+        contract["valid"] = "rx_valid"
+        contract["ready"] = "sink_ready"
+        result = core.generate_ready_valid_uvm_agent(json.dumps(contract))
+        self.assertIn("vif.drv_cb.sink_ready <= req_item.ready;", result["package_sv"])
+        self.assertIn("vif.mon_cb.rx_valid === 1'b1", result["package_sv"])
+        self.assertIn("vif.mon_cb.sink_ready === 1'b1", result["package_sv"])
+        self.assertIn("observed.ready = vif.mon_cb.sink_ready;", result["package_sv"])
+
     def test_ready_valid_uvm_generator_rejects_reset(self):
         contract = self._ready_valid_contract()
         contract["reset"] = {"signal": "rst_n", "active_level": 0}

@@ -456,12 +456,12 @@ def generate_ready_valid_uvm_agent(contract_json: str) -> dict[str, Any]:
         drv_out, drv_in, dut_in, dut_out = [valid] + payload_names, [ready], [valid] + payload_names, [ready]
         extra_decl, extra_macro = [], []
         driver_body = [
-            "      @(vif.drv_cb);", "      vif.drv_cb.valid <= 1'b0;", "      forever begin",
+            "      @(vif.drv_cb);", f"      vif.drv_cb.{valid} <= 1'b0;", "      forever begin",
             "        seq_item_port.get_next_item(req_item);", "        @(vif.drv_cb);",
-            "        vif.drv_cb.valid <= 1'b1;", *payload_driver,
+            f"        vif.drv_cb.{valid} <= 1'b1;", *payload_driver,
             "        do begin", "          @(vif.mon_cb);",
-            "        end while (vif.mon_cb.ready !== 1'b1);",
-            "        @(vif.drv_cb);", "        vif.drv_cb.valid <= 1'b0;",
+            f"        end while (vif.mon_cb.{ready} !== 1'b1);",
+            "        @(vif.drv_cb);", f"        vif.drv_cb.{valid} <= 1'b0;",
             "        seq_item_port.item_done();", "      end"
         ]
     else:
@@ -469,9 +469,9 @@ def generate_ready_valid_uvm_agent(contract_json: str) -> dict[str, Any]:
         extra_decl = ["    rand bit ready;"]
         extra_macro = [f"    {macro}uvm_field_int(ready, UVM_DEFAULT)"]
         driver_body = [
-            "      @(vif.drv_cb);", "      vif.drv_cb.ready <= 1'b0;", "      forever begin",
+            "      @(vif.drv_cb);", f"      vif.drv_cb.{ready} <= 1'b0;", "      forever begin",
             "        seq_item_port.get_next_item(req_item);", "        @(vif.drv_cb);",
-            "        vif.drv_cb.ready <= req_item.ready;", "        @(vif.mon_cb);",
+            f"        vif.drv_cb.{ready} <= req_item.ready;", "        @(vif.mon_cb);",
             "        seq_item_port.item_done();", "      end"
         ]
     assertion_lines = [
@@ -504,7 +504,7 @@ def generate_ready_valid_uvm_agent(contract_json: str) -> dict[str, Any]:
     ])
     item, sequencer, sequence = f"{agent_name}_item", f"{agent_name}_sequencer", f"{agent_name}_smoke_seq"
     driver, monitor, agent, package = f"{agent_name}_driver", f"{agent_name}_monitor", f"{agent_name}_agent", f"{agent_name}_agent_pkg"
-    monitor_assignments = payload_monitor + (["          observed.ready = vif.mon_cb.ready;"] if role == "sink" else [])
+    monitor_assignments = payload_monitor + ([f"          observed.ready = vif.mon_cb.{ready};"] if role == "sink" else [])
     package_lines = [
         "// Generic UVM ready/valid scaffold. Review timing and semantics against the real interface contract.",
         f"package {package};", "  import uvm_pkg::*;", f'  {macro}include "uvm_macros.svh"', "",
@@ -538,7 +538,7 @@ def generate_ready_valid_uvm_agent(contract_json: str) -> dict[str, Any]:
         f'        {macro}uvm_fatal("NOVIF", "Virtual interface not configured for {monitor}")',
         "    endfunction", "    task run_phase(uvm_phase phase);", f"      {item} observed;",
         "      forever begin", "        @(vif.mon_cb);",
-        "        if ((vif.mon_cb.valid === 1'b1) && (vif.mon_cb.ready === 1'b1)) begin",
+        f"        if ((vif.mon_cb.{valid} === 1'b1) && (vif.mon_cb.{ready} === 1'b1)) begin",
         f'          observed = {item}::type_id::create("observed");', *monitor_assignments,
         "          analysis_port.write(observed);", "        end", "      end", "    endtask", "  endclass", "",
         f"  class {agent} extends uvm_agent;", f"    {macro}uvm_component_utils({agent})",
