@@ -236,6 +236,121 @@ def generate_ready_valid_sva(
     )
 
 
+def generate_uvm_agent_skeleton(agent_name: str, interface_type: str, fields_json: str) -> str:
+    """Generate UVM class shells; driver and monitor behavior remain TODOs."""
+    agent_name = _identifier(agent_name, "agent_name")
+    interface_type = _identifier(interface_type, "interface_type")
+    fields = _load_json(fields_json, "fields_json")
+    if not isinstance(fields, list) or not 1 <= len(fields) <= 128:
+        raise ValueError("fields_json must be an array containing 1 to 128 transaction fields.")
+    seen: set[str] = set()
+    declarations: list[str] = []
+    field_macros: list[str] = []
+    for index, field in enumerate(fields):
+        if not isinstance(field, dict):
+            raise ValueError(f"fields_json[{index}] must be an object.")
+        name = _identifier(field.get("name"), f"fields_json[{index}].name")
+        if name in seen:
+            raise ValueError(f"Duplicate transaction field: {name}")
+        seen.add(name)
+        width = field.get("width", 1)
+        if not isinstance(width, int) or isinstance(width, bool) or not 1 <= width <= 4096:
+            raise ValueError(f"Field {name}: width must be an integer from 1 to 4096.")
+        signed = field.get("signed", False)
+        if not isinstance(signed, bool):
+            raise ValueError(f"Field {name}: signed must be boolean.")
+        sign = " signed" if signed else ""
+        packed = f" [{width - 1}:0]" if width > 1 else ""
+        declarations.append(f"    rand bit{sign}{packed} {name};")
+        field_macros.append(f"    `uvm_field_int({name}, UVM_DEFAULT)")
+    item = f"{agent_name}_item"
+    sequencer = f"{agent_name}_sequencer"
+    driver = f"{agent_name}_driver"
+    monitor = f"{agent_name}_monitor"
+    agent = f"{agent_name}_agent"
+    sequence = f"{agent_name}_smoke_seq"
+    package = f"{agent_name}_agent_pkg"
+    return (
+        "// UVM scaffold only: implement and review every TODO against the actual interface contract.\n"
+        f"package {package};\n"
+        "  import uvm_pkg::*;\n"
+        '  `include "uvm_macros.svh"\n\n'
+        f"  class {item} extends uvm_sequence_item;\n"
+        + "\n".join(declarations) + "\n"
+        + f"    `uvm_object_utils_begin({item})\n"
+        + "\n".join(field_macros) + "\n"
+        + "    `uvm_object_utils_end\n"
+        + f'    function new(string name = "{item}"); super.new(name); endfunction\n'
+        + "  endclass\n\n"
+        + f"  class {sequencer} extends uvm_sequencer #({item});\n"
+        + f"    `uvm_component_utils({sequencer})\n"
+        + f'    function new(string name = "{sequencer}", uvm_component parent = null); super.new(name, parent); endfunction\n'
+        + "  endclass\n\n"
+        + f"  class {sequence} extends uvm_sequence #({item});\n"
+        + f"    `uvm_object_utils({sequence})\n"
+        + f'    function new(string name = "{sequence}"); super.new(name); endfunction\n'
+        + "    task body();\n"
+        + f"      {item} req_item;\n"
+        + f'      req_item = {item}::type_id::create("req_item");\n'
+        + "      start_item(req_item);\n"
+        + '      if (!req_item.randomize()) `uvm_error("RAND", "Transaction randomization failed")\n'
+        + "      finish_item(req_item);\n"
+        + "    endtask\n"
+        + "  endclass\n\n"
+        + f"  class {driver} extends uvm_driver #({item});\n"
+        + f"    `uvm_component_utils({driver})\n"
+        + f"    virtual {interface_type} vif;\n"
+        + f'    function new(string name = "{driver}", uvm_component parent = null); super.new(name, parent); endfunction\n'
+        + "    function void build_phase(uvm_phase phase);\n"
+        + "      super.build_phase(phase);\n"
+        + f'      if (!uvm_config_db #(virtual {interface_type})::get(this, "", "vif", vif))\n'
+        + f'        `uvm_fatal("NOVIF", "Virtual interface not configured for {driver}")\n'
+        + "    endfunction\n"
+        + "    // TODO: implement run_phase, sequence-item consumption, and pin driving.\n"
+        + "  endclass\n\n"
+        + f"  class {monitor} extends uvm_monitor;\n"
+        + f"    `uvm_component_utils({monitor})\n"
+        + f"    virtual {interface_type} vif;\n"
+        + f"    uvm_analysis_port #({item}) analysis_port;\n"
+        + f'    function new(string name = "{monitor}", uvm_component parent = null);\n'
+        + "      super.new(name, parent);\n"
+        + '      analysis_port = new("analysis_port", this);\n'
+        + "    endfunction\n"
+        + "    function void build_phase(uvm_phase phase);\n"
+        + "      super.build_phase(phase);\n"
+        + f'      if (!uvm_config_db #(virtual {interface_type})::get(this, "", "vif", vif))\n'
+        + f'        `uvm_fatal("NOVIF", "Virtual interface not configured for {monitor}")\n'
+        + "    endfunction\n"
+        + "    // TODO: implement run_phase sampling and analysis_port.write().\n"
+        + "  endclass\n\n"
+        + f"  class {agent} extends uvm_agent;\n"
+        + f"    `uvm_component_utils({agent})\n"
+        + f"    virtual {interface_type} vif;\n"
+        + f"    {monitor} monitor;\n"
+        + f"    {driver} driver;\n"
+        + f"    {sequencer} sequencer;\n"
+        + f'    function new(string name = "{agent}", uvm_component parent = null); super.new(name, parent); endfunction\n'
+        + "    function void build_phase(uvm_phase phase);\n"
+        + "      super.build_phase(phase);\n"
+        + f'      if (!uvm_config_db #(virtual {interface_type})::get(this, "", "vif", vif))\n'
+        + f'        `uvm_fatal("NOVIF", "Virtual interface not configured for {agent}")\n'
+        + f'      uvm_config_db #(virtual {interface_type})::set(this, "monitor", "vif", vif);\n'
+        + f'      monitor = {monitor}::type_id::create("monitor", this);\n'
+        + "      if (is_active == UVM_ACTIVE) begin\n"
+        + f'        uvm_config_db #(virtual {interface_type})::set(this, "driver", "vif", vif);\n'
+        + f'        driver = {driver}::type_id::create("driver", this);\n'
+        + f'        sequencer = {sequencer}::type_id::create("sequencer", this);\n'
+        + "      end\n"
+        + "    endfunction\n"
+        + "    function void connect_phase(uvm_phase phase);\n"
+        + "      super.connect_phase(phase);\n"
+        + "      if (is_active == UVM_ACTIVE) driver.seq_item_port.connect(sequencer.seq_item_export);\n"
+        + "    endfunction\n"
+        + "  endclass\n\n"
+        + f"endpackage : {package}\n"
+    )
+
+
 def generate_uvm_testplan(features_json: str, scope_note: str = "") -> str:
     features = _load_json(features_json, "features_json")
     if not isinstance(features, list) or len(features) > 100:
