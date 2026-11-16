@@ -1,6 +1,6 @@
 # UCIe Engineering MCP Server
 
-Local STDIO MCP server exposing deterministic UCIe workflow helpers. Version 1.1.0. Requires Python 3.11+ and uv.
+Local STDIO MCP server exposing deterministic UCIe workflow helpers, including UVM agent scaffolding. Version 1.2.0. Requires Python 3.11+ and uv.
 
 ~~~bash
 uv sync
