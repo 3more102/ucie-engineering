@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "UCIe Engineering Contributors" }]
-dependencies = ["mcp>=2.3.0,<3.0.0"]
+dependencies = ["mcp[cli]>=2.3.0,<3.0.0"]
 
 [project.scripts]
 ucie-mcp = "ucie_mcp.server:main"
