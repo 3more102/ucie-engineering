@@ -103,7 +103,7 @@ Before adapting the generic agent to the project, complete [the FDI-first interf
 
 ## Validation status
 
-GitHub Actions validates Python 3.11, 3.12, and 3.13, runs unit tests, compiles Python sources, validates JSON inputs, checks MCPB packaging, and smoke-tests both package import and the direct-file import path used by MCP Inspector. The workflow artifact is named ucie-engineering-v1.3.0.
+GitHub Actions validates Python 3.11, 3.12, and 3.13, runs unit tests, compiles Python sources, validates JSON inputs, checks MCPB packaging, and smoke-tests both package import and the direct-file import path used by MCP Inspector. The workflow artifact is named ucie-engineering-v1.3.1.
 
 ## License
 
