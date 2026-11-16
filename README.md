@@ -97,6 +97,10 @@ python -m unittest discover -s tests -v
 
 The tools are deterministic drafting and audit utilities. They do not inspect project files, execute simulators, synthesize RTL, or certify UCIe compliance.
 
+## Project interface-contract intake
+
+Before adapting the generic agent to the project, complete [the FDI-first interface contract intake](docs/INTERFACE_CONTRACT_INTAKE.md) from the team's controlled UCIe specification. It deliberately leaves signal names, widths, reset behavior, and protocol semantics unfilled rather than inventing them.
+
 ## Validation status
 
 GitHub Actions validates Python 3.11, 3.12, and 3.13, runs unit tests, compiles Python sources, validates JSON inputs, checks MCPB packaging, and smoke-tests both package import and the direct-file import path used by MCP Inspector. The workflow artifact is named ucie-engineering-v1.3.0.
