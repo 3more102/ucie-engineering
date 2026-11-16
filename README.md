@@ -36,7 +36,7 @@ Official links:
 - Treat FDI and RDI as distinct interface contracts.
 - Do not claim standards compliance from generated RTL, lint, unit tests, or a partial simulation.
 - The generic CRC-16/CCITT-FALSE utility is not a UCIe CRC implementation.
-- The generic ready/valid SVA helper is a contract template, not a UCIe-specific interface definition.
+- The generic ready/valid SVA helper is a contract template, not a UCIe-specific interface definition. The UVM agent generator creates class scaffolding only; pin-driving and monitor sampling must be implemented from the verified interface contract.
 - Do not reproduce copyrighted specification text; use an authorized copy and cite precise locations.
 
 ## Build release artifacts
@@ -88,6 +88,7 @@ python -m unittest discover -s tests -v
 - ucie_generate_sv_module_shell
 - ucie_generate_sva_skeleton — explicit overlapped/non-overlapped implication.
 - ucie_generate_ready_valid_sva — generic next-cycle valid/payload hold assertions.
+- ucie_generate_uvm_agent_skeleton — transaction, sequence, sequencer, driver, monitor and agent class shells.
 - ucie_generate_uvm_testplan
 - ucie_audit_traceability_matrix
 - ucie_crc16_ccitt_false
@@ -96,7 +97,7 @@ The tools are deterministic drafting and audit utilities. They do not inspect pr
 
 ## Validation status
 
-GitHub Actions validates Python 3.11, 3.12, and 3.13, runs unit tests, compiles Python sources, validates JSON inputs, checks MCPB packaging, and smoke-tests both package import and the direct-file import path used by MCP Inspector. The workflow artifact is named ucie-engineering-v1.1.0.
+GitHub Actions validates Python 3.11, 3.12, and 3.13, runs unit tests, compiles Python sources, validates JSON inputs, checks MCPB packaging, and smoke-tests both package import and the direct-file import path used by MCP Inspector. The workflow artifact is named ucie-engineering-v1.2.0.
 
 ## License
 
