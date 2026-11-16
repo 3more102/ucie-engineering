@@ -1,6 +1,6 @@
 # UCIe Engineering MCP Server
 
-Local STDIO MCP server exposing deterministic UCIe workflow helpers, including contract-driven generic ready/valid UVM agent generation. Version 1.3.0. Requires Python 3.11+ and uv.
+Local STDIO MCP server exposing deterministic UCIe workflow helpers, including contract-driven generic ready/valid UVM agent generation. Version 1.3.1. Requires Python 3.11+ and uv.
 
 ~~~bash
 uv sync
