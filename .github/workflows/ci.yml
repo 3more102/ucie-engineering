@@ -62,7 +62,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: matrix.python-version == '3.11'
         with:
-          name: ucie-engineering-v1.3.0
+          name: ucie-engineering-v1.3.1
           path: |
             dist/ucie-engineering-skill.zip
             dist/ucie-engineering.mcpb
