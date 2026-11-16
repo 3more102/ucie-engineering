@@ -2,7 +2,7 @@
 
 ## 1.3.2 — 2026-11-16
 
-- Hardened the release source archive to include only files present in the Git index, excluding untracked workspace files such as local `.env` files.
+- Hardened the release source archive to include only files committed in the Git tree, excluding untracked workspace files such as local `.env` files.
 - Added a regression test using a temporary Git repository containing tracked files, an untracked `.env`, and untracked notes.
 - Bumped MCP package and bundle version to 1.3.2.
 

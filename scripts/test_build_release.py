@@ -8,7 +8,7 @@ import build_release
 
 
 class ReleaseArchiveTests(unittest.TestCase):
-    def test_source_archive_contains_only_git_indexed_files(self):
+    def test_source_archive_contains_only_committed_files(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             subprocess.run(["git", "init", "--quiet", str(root)], check=True)
@@ -18,17 +18,20 @@ class ReleaseArchiveTests(unittest.TestCase):
             (root / "README.md").write_text("tracked readme\n", encoding="utf-8")
             (root / "docs").mkdir()
             (root / "docs" / "architecture.md").write_text("tracked architecture\n", encoding="utf-8")
-            (root / ".env").write_text("API_TOKEN=must-not-ship\n", encoding="utf-8")
+            (root / ".gitignore").write_text(".env\n", encoding="utf-8")
             (root / "local-notes.txt").write_text("untracked workspace note\n", encoding="utf-8")
 
             subprocess.run(
-                ["git", "-C", str(root), "add", "README.md", "docs/architecture.md"],
+                ["git", "-C", str(root), "add", "README.md", ".gitignore", "docs/architecture.md"],
                 check=True,
             )
             subprocess.run(
                 ["git", "-C", str(root), "commit", "--quiet", "-m", "fixture"],
                 check=True,
             )
+
+            (root / ".env").write_text("API_TOKEN=must-not-ship\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(root), "add", "-f", ".env"], check=True)
 
             archive_path = build_release.build_source(root=root, dist=root / "dist")
             with zipfile.ZipFile(archive_path) as archive:

@@ -42,12 +42,12 @@ def build_mcpb() -> Path:
 
 
 def build_source(root: Path = ROOT, dist: Path = DIST) -> Path:
-    """Archive only Git-indexed files; never sweep untracked local workspace files."""
+    """Archive only committed Git files; never sweep untracked local workspace files."""
     dist.mkdir(parents=True, exist_ok=True)
     target = dist / "ucie-claude-engineering-source.zip"
     try:
         tracked = subprocess.run(
-            ["git", "-C", str(root), "ls-files", "-z"],
+            ["git", "-C", str(root), "ls-tree", "-r", "--name-only", "-z", "HEAD"],
             check=True,
             capture_output=True,
         ).stdout
