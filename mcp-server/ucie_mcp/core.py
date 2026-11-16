@@ -351,6 +351,209 @@ def generate_uvm_agent_skeleton(agent_name: str, interface_type: str, fields_jso
     )
 
 
+
+def _ready_valid_contract_data(contract_json: str) -> tuple[dict[str, Any], list[str], list[str]]:
+    data = _load_json(contract_json, "contract_json")
+    if not isinstance(data, dict):
+        raise ValueError("contract_json must contain a JSON object.")
+    errors: list[str] = []
+    warnings: list[str] = []
+    if data.get("schema_version") != "1.0":
+        errors.append("schema_version must be '1.0'.")
+    identifiers: dict[str, str] = {}
+    for key in ("interface_name", "agent_name", "clock", "valid", "ready"):
+        try:
+            identifiers[key] = _identifier(data.get(key), key)
+        except ValueError as exc:
+            errors.append(str(exc))
+    if data.get("role") not in ("source", "sink"):
+        errors.append("role must be either 'source' or 'sink'.")
+    drive_edge, sample_edge = data.get("drive_edge"), data.get("sample_edge")
+    if drive_edge not in ("posedge", "negedge"):
+        errors.append("drive_edge must be 'posedge' or 'negedge'.")
+    if sample_edge not in ("posedge", "negedge"):
+        errors.append("sample_edge must be 'posedge' or 'negedge'.")
+    if drive_edge in ("posedge", "negedge") and sample_edge in ("posedge", "negedge") and drive_edge == sample_edge:
+        errors.append("drive_edge and sample_edge must differ to avoid same-edge drive/sample races.")
+    if data.get("reset") not in (None, "", {}):
+        errors.append("Reset handling is not generated. Remove 'reset' and add project-specific reset behavior before integration.")
+    payload = data.get("payload")
+    normalized_payload: list[dict[str, Any]] = []
+    if not isinstance(payload, list) or not 1 <= len(payload) <= 64:
+        errors.append("payload must be an array containing 1 to 64 fields.")
+    else:
+        for i, field in enumerate(payload):
+            if not isinstance(field, dict):
+                errors.append(f"payload[{i}] must be an object.")
+                continue
+            try:
+                name = _identifier(field.get("name"), f"payload[{i}].name")
+            except ValueError as exc:
+                errors.append(str(exc))
+                continue
+            width, signed = field.get("width", 1), field.get("signed", False)
+            if not isinstance(width, int) or isinstance(width, bool) or not 1 <= width <= 4096:
+                errors.append(f"payload[{i}].width must be an integer from 1 to 4096.")
+                continue
+            if not isinstance(signed, bool):
+                errors.append(f"payload[{i}].signed must be boolean.")
+                continue
+            normalized_payload.append({"name": name, "width": width, "signed": signed})
+    signal_names = [identifiers[k] for k in ("clock", "valid", "ready") if k in identifiers]
+    signal_names.extend(x["name"] for x in normalized_payload)
+    if len(signal_names) != len(set(signal_names)):
+        errors.append("clock, valid, ready, and payload signal names must all be unique.")
+    source_ref = data.get("source_ref", "")
+    if source_ref:
+        if not isinstance(source_ref, str) or len(source_ref) > 1000 or "\n" in source_ref or "\r" in source_ref:
+            errors.append("source_ref must be a single-line string of at most 1000 characters.")
+    else:
+        warnings.append("No source_ref supplied. The contract is user-provided and has not been checked against a controlled UCIe specification.")
+    if errors:
+        return data, errors, warnings
+    normalized = dict(data)
+    normalized["payload"] = normalized_payload
+    return normalized, errors, warnings
+
+
+def validate_ready_valid_contract(contract_json: str) -> dict[str, Any]:
+    """Validate a user-supplied generic ready/valid contract; not UCIe compliance checking."""
+    data, errors, warnings = _ready_valid_contract_data(contract_json)
+    return {
+        "status": "invalid" if errors else "valid", "errors": errors, "warnings": warnings,
+        "interface_name": data.get("interface_name"), "agent_name": data.get("agent_name"),
+        "role": data.get("role"),
+        "payload_fields": len(data.get("payload", [])) if isinstance(data.get("payload"), list) else 0,
+        "supported_contract": "single-clock generic ready/valid; no reset, timeout, packet framing, or UCIe-specific semantics",
+        "disclaimer": "Structural validation only. The contract is not compared with the UCIe specification and does not establish FDI/RDI compliance.",
+    }
+
+
+def generate_ready_valid_uvm_agent(contract_json: str) -> dict[str, Any]:
+    """Generate a generic source- or sink-side ready/valid interface and UVM agent."""
+    data, errors, warnings = _ready_valid_contract_data(contract_json)
+    if errors:
+        raise ValueError("Invalid ready/valid contract: " + " ".join(errors))
+    interface_name, agent_name = data["interface_name"], data["agent_name"]
+    clock, valid, ready = data["clock"], data["valid"], data["ready"]
+    role, payload = data["role"], data["payload"]
+    drive_edge, sample_edge = data["drive_edge"], data["sample_edge"]
+    payload_names = [x["name"] for x in payload]
+    macro = chr(96)
+    sigs = lambda items: ", ".join(items)
+    payload_decls, payload_driver, payload_monitor, item_decls, item_macros = [], [], [], [], []
+    for field in payload:
+        width = field["width"]
+        signed = " signed" if field["signed"] else ""
+        packed = f" [{width - 1}:0]" if width > 1 else ""
+        payload_decls.append(f"  logic{signed}{packed} {field['name']};")
+        item_decls.append(f"    rand bit{signed}{packed} {field['name']};")
+        item_macros.append(f"    {macro}uvm_field_int({field['name']}, UVM_DEFAULT)")
+        payload_monitor.append(f"          observed.{field['name']} = vif.mon_cb.{field['name']};")
+        if role == "source":
+            payload_driver.append(f"        vif.drv_cb.{field['name']} <= req_item.{field['name']};")
+    if role == "source":
+        drv_out, drv_in, dut_in, dut_out = [valid] + payload_names, [ready], [valid] + payload_names, [ready]
+        extra_decl, extra_macro = [], []
+        driver_body = [
+            "      @(vif.drv_cb);", "      vif.drv_cb.valid <= 1'b0;", "      forever begin",
+            "        seq_item_port.get_next_item(req_item);", "        @(vif.drv_cb);",
+            "        vif.drv_cb.valid <= 1'b1;", *payload_driver,
+            "        do begin", "          @(vif.mon_cb);",
+            "        end while (vif.mon_cb.ready !== 1'b1);",
+            "        @(vif.drv_cb);", "        vif.drv_cb.valid <= 1'b0;",
+            "        seq_item_port.item_done();", "      end"
+        ]
+    else:
+        drv_out, drv_in, dut_in, dut_out = [ready], [valid] + payload_names, [ready], [valid] + payload_names
+        extra_decl = ["    rand bit ready;"]
+        extra_macro = [f"    {macro}uvm_field_int(ready, UVM_DEFAULT)"]
+        driver_body = [
+            "      @(vif.drv_cb);", "      vif.drv_cb.ready <= 1'b0;", "      forever begin",
+            "        seq_item_port.get_next_item(req_item);", "        @(vif.drv_cb);",
+            "        vif.drv_cb.ready <= req_item.ready;", "        @(vif.mon_cb);",
+            "        seq_item_port.item_done();", "      end"
+        ]
+    interface_sv = "\n".join([
+        "// Generic ready/valid interface generated from the supplied contract; verify before integration.",
+        f"interface {interface_name}(input logic {clock});",
+        f"  logic {valid};", f"  logic {ready};", *payload_decls, "",
+        f"  clocking drv_cb @({drive_edge} {clock});", "    default input #1step output #0;",
+        f"    output {sigs(drv_out)};", f"    input {sigs(drv_in)};", "  endclocking", "",
+        f"  clocking mon_cb @({sample_edge} {clock});", "    default input #1step;",
+        f"    input {sigs([valid, ready] + payload_names)};", "  endclocking", "",
+        f"  modport dut (input {sigs([clock] + dut_in)}, output {sigs(dut_out)});",
+        f"  modport tb (input {clock}, clocking drv_cb, clocking mon_cb);",
+        f"endinterface : {interface_name}", ""
+    ])
+    item, sequencer, sequence = f"{agent_name}_item", f"{agent_name}_sequencer", f"{agent_name}_smoke_seq"
+    driver, monitor, agent, package = f"{agent_name}_driver", f"{agent_name}_monitor", f"{agent_name}_agent", f"{agent_name}_agent_pkg"
+    monitor_assignments = payload_monitor + (["          observed.ready = vif.mon_cb.ready;"] if role == "sink" else [])
+    package_lines = [
+        "// Generic UVM ready/valid scaffold. Review timing and semantics against the real interface contract.",
+        f"package {package};", "  import uvm_pkg::*;", f'  {macro}include "uvm_macros.svh"', "",
+        f"  class {item} extends uvm_sequence_item;", *item_decls, *extra_decl,
+        f"    {macro}uvm_object_utils_begin({item})", *item_macros, *extra_macro,
+        f"    {macro}uvm_object_utils_end",
+        f'    function new(string name = "{item}"); super.new(name); endfunction', "  endclass", "",
+        f"  class {sequencer} extends uvm_sequencer #({item});", f"    {macro}uvm_component_utils({sequencer})",
+        f'    function new(string name = "{sequencer}", uvm_component parent = null); super.new(name, parent); endfunction',
+        "  endclass", "",
+        f"  class {sequence} extends uvm_sequence #({item});", f"    {macro}uvm_object_utils({sequence})",
+        f'    function new(string name = "{sequence}"); super.new(name); endfunction',
+        "    task body();", f"      {item} req_item;", f'      req_item = {item}::type_id::create("req_item");',
+        "      start_item(req_item);",
+        f'      if (!req_item.randomize()) {macro}uvm_error("RAND", "Transaction randomization failed")',
+        "      finish_item(req_item);", "    endtask", "  endclass", "",
+        f"  class {driver} extends uvm_driver #({item});", f"    {macro}uvm_component_utils({driver})",
+        f"    virtual {interface_name} vif;",
+        f'    function new(string name = "{driver}", uvm_component parent = null); super.new(name, parent); endfunction',
+        "    function void build_phase(uvm_phase phase);", "      super.build_phase(phase);",
+        f'      if (!uvm_config_db #(virtual {interface_name})::get(this, "", "vif", vif))',
+        f'        {macro}uvm_fatal("NOVIF", "Virtual interface not configured for {driver}")',
+        "    endfunction", "    task run_phase(uvm_phase phase);", f"      {item} req_item;",
+        *driver_body, "    endtask", "  endclass", "",
+        f"  class {monitor} extends uvm_monitor;", f"    {macro}uvm_component_utils({monitor})",
+        f"    virtual {interface_name} vif;", f"    uvm_analysis_port #({item}) analysis_port;",
+        f'    function new(string name = "{monitor}", uvm_component parent = null);',
+        "      super.new(name, parent);", '      analysis_port = new("analysis_port", this);', "    endfunction",
+        "    function void build_phase(uvm_phase phase);", "      super.build_phase(phase);",
+        f'      if (!uvm_config_db #(virtual {interface_name})::get(this, "", "vif", vif))',
+        f'        {macro}uvm_fatal("NOVIF", "Virtual interface not configured for {monitor}")',
+        "    endfunction", "    task run_phase(uvm_phase phase);", f"      {item} observed;",
+        "      forever begin", "        @(vif.mon_cb);",
+        "        if ((vif.mon_cb.valid === 1'b1) && (vif.mon_cb.ready === 1'b1)) begin",
+        f'          observed = {item}::type_id::create("observed");', *monitor_assignments,
+        "          analysis_port.write(observed);", "        end", "      end", "    endtask", "  endclass", "",
+        f"  class {agent} extends uvm_agent;", f"    {macro}uvm_component_utils({agent})",
+        f"    virtual {interface_name} vif;", f"    {monitor} monitor;", f"    {driver} driver;", f"    {sequencer} sequencer;",
+        f'    function new(string name = "{agent}", uvm_component parent = null); super.new(name, parent); endfunction',
+        "    function void build_phase(uvm_phase phase);", "      super.build_phase(phase);",
+        f'      if (!uvm_config_db #(virtual {interface_name})::get(this, "", "vif", vif))',
+        f'        {macro}uvm_fatal("NOVIF", "Virtual interface not configured for {agent}")',
+        f'      uvm_config_db #(virtual {interface_name})::set(this, "monitor", "vif", vif);',
+        f'      monitor = {monitor}::type_id::create("monitor", this);', "      if (is_active == UVM_ACTIVE) begin",
+        f'        uvm_config_db #(virtual {interface_name})::set(this, "driver", "vif", vif);',
+        f'        driver = {driver}::type_id::create("driver", this);',
+        f'        sequencer = {sequencer}::type_id::create("sequencer", this);', "      end",
+        "    endfunction", "    function void connect_phase(uvm_phase phase);", "      super.connect_phase(phase);",
+        "      if (is_active == UVM_ACTIVE) driver.seq_item_port.connect(sequencer.seq_item_export);",
+        "    endfunction", "  endclass", "", f"endpackage : {package}", ""
+    ]
+    return {
+        "status": "generated", "interface_name": interface_name, "agent_name": agent_name, "role": role,
+        "interface_file": f"{interface_name}.sv", "interface_sv": interface_sv,
+        "package_file": f"{package}.sv", "package_sv": "\n".join(package_lines),
+        "warnings": warnings, "source_ref": data.get("source_ref") or None,
+        "limitations": [
+            "Generic single-clock ready/valid scaffold only; not a UCIe FDI/RDI implementation.",
+            "Reset, timeout, packet framing, CRC, retry/replay, credits, and protocol-specific ordering are not generated.",
+            "Compile the interface before the UVM package and configure the virtual interface from the testbench.",
+            "Generated SystemVerilog has not been compiled or simulated by this tool."
+        ]
+    }
+
+
 def generate_uvm_testplan(features_json: str, scope_note: str = "") -> str:
     features = _load_json(features_json, "features_json")
     if not isinstance(features, list) or len(features) > 100:

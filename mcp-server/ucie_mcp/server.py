@@ -18,7 +18,7 @@ else:
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("ucie-engineering")
-mcp = MCPServer("ucie-engineering", version="1.2.0")
+mcp = MCPServer("ucie-engineering", version="1.3.0")
 
 
 def _json_result(function, *args):
@@ -91,6 +91,19 @@ def ucie_generate_uvm_agent_skeleton(agent_name: str, interface_type: str, field
         return core.generate_uvm_agent_skeleton(agent_name, interface_type, fields_json)
     except (ValueError, TypeError) as exc:
         return json.dumps({"status": "error", "error": str(exc)}, indent=2)
+
+
+@mcp.tool()
+def ucie_validate_ready_valid_contract(contract_json: str) -> str:
+    """Validate an explicit generic ready/valid contract; not a UCIe compliance check."""
+    return _json_result(core.validate_ready_valid_contract, contract_json)
+
+
+@mcp.tool()
+def ucie_generate_ready_valid_uvm_agent(contract_json: str) -> str:
+    """Generate a generic source- or sink-side ready/valid interface and UVM agent."""
+    return _json_result(core.generate_ready_valid_uvm_agent, contract_json)
+
 
 @mcp.tool()
 def ucie_generate_uvm_testplan(features_json: str, scope_note: str = "") -> str:

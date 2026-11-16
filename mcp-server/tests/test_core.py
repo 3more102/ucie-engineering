@@ -95,6 +95,78 @@ class CoreTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             core.generate_uvm_agent_skeleton("tx", "link_if", json.dumps(fields))
 
+    def _ready_valid_contract(self, role="source"):
+        return {
+            "schema_version": "1.0", "interface_name": "fdi_tx_if", "agent_name": "fdi_tx",
+            "clock": "clk", "drive_edge": "negedge", "sample_edge": "posedge", "role": role,
+            "valid": "valid", "ready": "ready",
+            "payload": [{"name": "flit", "width": 128}, {"name": "opcode", "width": 4}],
+            "source_ref": "Project interface contract Rev A, Section 2.1"
+        }
+
+    def test_ready_valid_contract_accepts_explicit_source_contract(self):
+        result = core.validate_ready_valid_contract(json.dumps(self._ready_valid_contract()))
+        self.assertEqual(result["status"], "valid")
+        self.assertEqual(result["role"], "source")
+        self.assertEqual(result["payload_fields"], 2)
+        self.assertEqual(result["warnings"], [])
+
+    def test_ready_valid_contract_rejects_same_drive_and_sample_edge(self):
+        contract = self._ready_valid_contract()
+        contract["sample_edge"] = "negedge"
+        result = core.validate_ready_valid_contract(json.dumps(contract))
+        self.assertEqual(result["status"], "invalid")
+        self.assertTrue(any("must differ" in error for error in result["errors"]))
+
+    def test_ready_valid_contract_rejects_duplicate_signal_names(self):
+        contract = self._ready_valid_contract()
+        contract["payload"][0]["name"] = "valid"
+        result = core.validate_ready_valid_contract(json.dumps(contract))
+        self.assertEqual(result["status"], "invalid")
+        self.assertTrue(any("must all be unique" in error for error in result["errors"]))
+
+    def test_ready_valid_contract_rejects_reset_declaration(self):
+        contract = self._ready_valid_contract()
+        contract["reset"] = {"signal": "rst_n", "active_level": 0}
+        result = core.validate_ready_valid_contract(json.dumps(contract))
+        self.assertEqual(result["status"], "invalid")
+        self.assertTrue(any("Reset handling is not generated" in error for error in result["errors"]))
+
+    def test_ready_valid_contract_warns_without_source_reference(self):
+        contract = self._ready_valid_contract()
+        del contract["source_ref"]
+        result = core.validate_ready_valid_contract(json.dumps(contract))
+        self.assertEqual(result["status"], "valid")
+        self.assertTrue(any("No source_ref supplied" in warning for warning in result["warnings"]))
+
+    def test_ready_valid_uvm_source_agent_generation(self):
+        result = core.generate_ready_valid_uvm_agent(json.dumps(self._ready_valid_contract("source")))
+        self.assertEqual(result["status"], "generated")
+        self.assertIn("output valid, flit, opcode;", result["interface_sv"])
+        self.assertIn("input ready;", result["interface_sv"])
+        self.assertIn("input clk, valid, flit, opcode", result["interface_sv"])
+        self.assertIn("output ready", result["interface_sv"])
+        self.assertIn("vif.drv_cb.valid <= 1'b1;", result["package_sv"])
+        self.assertIn("vif.drv_cb.flit <= req_item.flit;", result["package_sv"])
+        self.assertIn("while (vif.mon_cb.ready !== 1'b1)", result["package_sv"])
+        self.assertIn("analysis_port.write(observed);", result["package_sv"])
+
+    def test_ready_valid_uvm_sink_agent_generation(self):
+        result = core.generate_ready_valid_uvm_agent(json.dumps(self._ready_valid_contract("sink")))
+        self.assertIn("output ready;", result["interface_sv"])
+        self.assertIn("input valid, flit, opcode;", result["interface_sv"])
+        self.assertIn("output valid, flit, opcode", result["interface_sv"])
+        self.assertIn("input clk, ready", result["interface_sv"])
+        self.assertIn("rand bit ready;", result["package_sv"])
+        self.assertIn("vif.drv_cb.ready <= req_item.ready;", result["package_sv"])
+        self.assertIn("observed.ready = vif.mon_cb.ready;", result["package_sv"])
+
+    def test_ready_valid_uvm_generator_rejects_reset(self):
+        contract = self._ready_valid_contract()
+        contract["reset"] = {"signal": "rst_n", "active_level": 0}
+        with self.assertRaises(ValueError):
+            core.generate_ready_valid_uvm_agent(json.dumps(contract))
+
     def test_uvm_plan_keeps_todos(self):
         plan = core.generate_uvm_testplan(json.dumps([{"id": "F1", "name": "Retry", "source_refs": ["UCIe clause TBD"]}]))
         self.assertIn("F1_NOMINAL", plan)
