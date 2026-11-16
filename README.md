@@ -4,29 +4,28 @@ A source-grounded engineering assistant for UCIe die-to-die adapter architecture
 
 ## Repository layout
 
-- `skill/ucie-engineering/SKILL.md` — Claude Agent Skill instructions.
-- `skill/ucie-engineering/references/` — architecture, verification, source-control, implementation, and publication guidance.
-- `mcp-server/` — local Python MCP server and deterministic engineering utilities.
-- `docs/` — installation, security, and engineering governance.
-- `examples/` — project manifest and verification inputs.
-- `dist/` — release archives and validation metadata.
+- skill/ucie-engineering/SKILL.md — Claude Agent Skill instructions.
+- skill/ucie-engineering/references/ — architecture, verification, source control, implementation, and publication guidance.
+- mcp-server/ — local Python MCP server and deterministic engineering utilities.
+- docs/ — installation and security guidance.
+- scripts/build_release.py — creates the uploadable Skill ZIP, MCPB bundle, source archive, and SHA-256 manifest.
 
 ## Baseline policy
 
-The starter project profile uses UCIe 3.0 as a controlled baseline. UCIe 4.0 is treated as a separate revision; requirements must never be mixed across revisions without an approved migration. The example profile is not a claim that UCIe 3.0 is the latest available specification.
+The example project profile uses UCIe 3.0 as a controlled starting baseline. UCIe 4.0 is treated as a separate revision; requirements must never be mixed across revisions without an approved migration. The example profile is not a claim that UCIe 3.0 is the newest available specification.
 
-Official source hierarchy:
+Normative source hierarchy:
 1. Authorized UCIe specification revision and applicable ECNs.
 2. Official UCIe Consortium publications.
-3. Accellera standards and reference materials where applicable.
+3. Applicable Accellera standards and reference materials.
 4. Peer-reviewed papers and vendor technical documentation.
 5. Community implementations as non-normative references.
 
 Official links:
-- https://www.uciexpress.org/specifications
-- https://www.uciexpress.org/press-releases
-- https://py.sdk.modelcontextprotocol.io/
-- https://github.com/modelcontextprotocol/mcpb
+- UCIe specifications: https://www.uciexpress.org/specifications
+- UCIe Consortium publications: https://www.uciexpress.org/press-releases
+- Official MCP Python SDK: https://py.sdk.modelcontextprotocol.io/
+- MCP Bundles: https://github.com/modelcontextprotocol/mcpb
 
 ## Engineering guardrails
 
@@ -36,44 +35,58 @@ Official links:
 - Treat FDI and RDI as distinct interface contracts.
 - Do not claim standards compliance from generated RTL, lint, unit tests, or a partial simulation.
 - The generic CRC-16/CCITT-FALSE utility is not a UCIe CRC implementation.
-- Do not reproduce copyrighted specification text; use an authorized copy and provide precise references.
+- Do not reproduce copyrighted specification text; use an authorized copy and cite precise locations.
+
+## Build release artifacts
+
+Requirements: Python 3.11+.
+
+~~~bash
+python scripts/build_release.py
+~~~
+
+The command creates:
+- dist/ucie-engineering-skill.zip — uploadable Claude Agent Skill.
+- dist/ucie-engineering.mcpb — Claude Desktop MCP Bundle.
+- dist/ucie-claude-engineering-source.zip — editable source archive.
+- dist/SHA256SUMS.txt — release checksums.
+
+These generated archives are intentionally excluded from Git. Attach them to a GitHub Release after validation.
 
 ## Install
 
 ### Claude Agent Skill
-Upload `dist/ucie-engineering-skill.zip` from the Releases or repository artifacts and enable it in Claude's Skills settings.
+Upload dist/ucie-engineering-skill.zip in Claude's Skills settings and enable it. See [Installation](docs/INSTALLATION.md).
 
 ### Claude Desktop MCP Bundle
-Install `dist/ucie-engineering.mcpb` through Claude Desktop's Extensions / Advanced settings flow.
+Install dist/ucie-engineering.mcpb through the Extensions / Advanced installation flow in Claude Desktop. Validate the bundle with the official MCPB CLI and test it on the target Desktop version.
 
 ### Local MCP development
-Requirements: Python 3.11+ and `uv`.
+Requirements: Python 3.11+ and uv.
 
-```bash
+~~~bash
 cd mcp-server
 uv sync
 uv run ucie-mcp
 python -m unittest discover -s tests -v
-```
-
-See [Installation](docs/INSTALLATION.md) and [Security](docs/SECURITY.md).
+~~~
 
 ## MCP tools
 
-- `ucie_validate_project_manifest`
-- `ucie_review_architecture_inputs`
-- `ucie_generate_sv_module_shell`
-- `ucie_generate_sva_skeleton`
-- `ucie_generate_uvm_testplan`
-- `ucie_audit_traceability_matrix`
-- `ucie_crc16_ccitt_false`
+- ucie_validate_project_manifest
+- ucie_review_architecture_inputs
+- ucie_generate_sv_module_shell
+- ucie_generate_sva_skeleton
+- ucie_generate_uvm_testplan
+- ucie_audit_traceability_matrix
+- ucie_crc16_ccitt_false
 
-These are deterministic drafting and audit utilities. They do not inspect project files, execute simulators, synthesize RTL, or certify UCIe compliance.
+The tools are deterministic drafting and audit utilities. They do not inspect project files, execute simulators, synthesize RTL, or certify UCIe compliance.
 
-## Status
+## Validation status
 
-Initial source release: **v1.0.0**. Core utility tests: **12 passed**. The official MCPB CLI validation and live Claude Desktop installation remain deployment checks to be completed on a machine with the relevant runtime and package access.
+GitHub Actions runs unit tests on Python 3.11, 3.12, and 3.13, compiles Python sources, validates JSON inputs, and builds release archives. The MCP SDK integration and installation in Claude Desktop require a separate runtime smoke test.
 
 ## License
 
-MIT. See [LICENSE](LICENSE). UCIe specifications and other referenced third-party materials are not included and remain subject to their respective terms.
+MIT. See [LICENSE](LICENSE). UCIe specifications and third-party materials are not included and remain subject to their respective terms.
