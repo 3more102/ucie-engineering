@@ -1,0 +1,13 @@
+[
+  {
+    "id": "FEAT-001",
+    "name": "CRC error detection",
+    "source_refs": ["Insert exact UCIe revision, clause, table, and page"],
+    "requirement": "Insert a paraphrase of the verified requirement.",
+    "nominal_stimulus": "Insert legal nominal traffic derived from the selected configuration.",
+    "expected_result": "Insert the source-backed expected behavior.",
+    "boundary_cases": ["Insert documented boundary cases"],
+    "negative_cases": ["Insert source-backed corrupted or malformed cases"],
+    "coverage_points": ["Insert requirement-driven coverage points"]
+  }
+]
