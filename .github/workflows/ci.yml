@@ -26,6 +26,14 @@ jobs:
         run: python -m compileall -q mcp-server/ucie_mcp skill/ucie-engineering/scripts scripts
       - name: Validate JSON manifests and examples
         run: |
-          python -c "import json,pathlib; files=list(pathlib.Path('.').rglob('*.json')) + list(pathlib.Path('.').rglob('manifest.json')); [json.loads(p.read_text(encoding='utf-8')) for p in files if '.git' not in p.parts]; print(f'Validated {len(files)} JSON files')"
-      - name: Build release archives
+          python -c "import json,pathlib; files=list(pathlib.Path('.').rglob('*.json')); [json.loads(p.read_text(encoding='utf-8')) for p in files if '.git' not in p.parts]; print(f'Validated {len(files)} JSON files')"
+      - name: Build Claude Skill and source archives
         run: python scripts/build_release.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate and package MCPB with official CLI
+        run: |
+          npm install -g @anthropic-ai/mcpb
+          mcpb validate mcp-server/manifest.json
+          mcpb pack mcp-server dist/ucie-engineering.mcpb
