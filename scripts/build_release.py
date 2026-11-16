@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import shutil
+import subprocess
 import tempfile
 import zipfile
 from pathlib import Path
@@ -39,16 +41,32 @@ def build_mcpb() -> Path:
     return target
 
 
-def build_source() -> Path:
-    target = DIST / "ucie-claude-engineering-source.zip"
+def build_source(root: Path = ROOT, dist: Path = DIST) -> Path:
+    """Archive only Git-indexed files; never sweep untracked local workspace files."""
+    dist.mkdir(parents=True, exist_ok=True)
+    target = dist / "ucie-claude-engineering-source.zip"
+    try:
+        tracked = subprocess.run(
+            ["git", "-C", str(root), "ls-files", "-z"],
+            check=True,
+            capture_output=True,
+        ).stdout
+    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
+        raise RuntimeError(
+            "Building the source archive requires a Git checkout with an accessible index."
+        ) from exc
+
     with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as archive:
-        for path in sorted(ROOT.rglob("*")):
-            if not path.is_file():
+        for raw_path in tracked.split(b"\0"):
+            if not raw_path:
                 continue
-            relative = path.relative_to(ROOT)
-            if any(part in {".git", ".venv", "__pycache__", ".pytest_cache"} for part in relative.parts):
+            relative = Path(os.fsdecode(raw_path))
+            if relative.is_absolute() or ".." in relative.parts:
+                raise RuntimeError(f"Unsafe tracked path returned by Git: {relative}")
+            if not relative.parts or relative.parts[0] == "dist":
                 continue
-            if relative.parts[0] == "dist":
+            path = root / relative
+            if path.is_symlink() or not path.is_file():
                 continue
             archive.write(path, relative.as_posix())
     return target

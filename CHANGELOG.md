@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.2 — 2026-11-16
+
+- Hardened the release source archive to include only files present in the Git index, excluding untracked workspace files such as local `.env` files.
+- Added a regression test using a temporary Git repository containing tracked files, an untracked `.env`, and untracked notes.
+- Bumped MCP package and bundle version to 1.3.2.
+
+
 ## 1.3.1 — 2026-11-16
 
 - Fixed source/sink UVM generation to use the contract's actual valid, ready, clock, and payload signal names rather than default names.

@@ -22,6 +22,8 @@ jobs:
         env:
           PYTHONPATH: .
         run: python -m unittest discover -s tests -v
+      - name: Test release archive excludes untracked local files
+        run: python -m unittest discover -s scripts -p "test_*.py" -v
       - name: Compile Python sources
         run: python -m compileall -q mcp-server/ucie_mcp skill/ucie-engineering/scripts scripts
       - name: Validate JSON manifests and examples
@@ -62,7 +64,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: matrix.python-version == '3.11'
         with:
-          name: ucie-engineering-v1.3.1
+          name: ucie-engineering-v1.3.2
           path: |
             dist/ucie-engineering-skill.zip
             dist/ucie-engineering.mcpb
