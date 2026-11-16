@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.0 — 2026-11-16
+
+- Added explicit generic ready/valid contract validation for source and sink roles.
+- Added generation of SystemVerilog interfaces with separate drive/monitor clocking blocks and DUT/testbench modports.
+- Added contract-driven UVM source/sink agents with transaction, smoke sequence, sequencer, driver, monitor, and analysis port.
+- Added regression tests for source/sink directionality, clock-edge separation, duplicate signals, source-reference warnings, and unsupported reset declarations.
+- Documented the limits of generated scaffolding and the need for project-specific reset and protocol behavior.
+- Bumped MCP package and bundle version to 1.3.0.
+
+
 ## 1.2.0 — 2026-11-16
 
 - Added UVM agent class scaffolding for transaction, sequence, sequencer, driver, monitor, and agent.
