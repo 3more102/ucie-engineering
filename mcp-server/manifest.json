@@ -2,7 +2,7 @@
   "manifest_version": "0.4",
   "name": "ucie-engineering",
   "display_name": "UCIe Engineering Tools",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Local utilities for UCIe architecture review, RTL/SVA scaffolding, UVM planning, traceability audits, and generic CRC reference calculations.",
   "long_description": "A local STDIO MCP server for source-grounded UCIe engineering workflows. Deterministic helpers only; no filesystem access, shell execution, simulator execution, or compliance certification.",
   "author": {
@@ -13,26 +13,74 @@
     "entry_point": "ucie_mcp/server.py",
     "mcp_config": {
       "command": "uv",
-      "args": ["run", "--directory", "${__dirname}", "ucie-mcp"],
+      "args": [
+        "run",
+        "--directory",
+        "${__dirname}",
+        "ucie-mcp"
+      ],
       "env": {}
     }
   },
   "tools": [
-    {"name": "ucie_validate_project_manifest", "description": "Validate required structure and source/scope fields in a UCIe project manifest."},
-    {"name": "ucie_review_architecture_inputs", "description": "Find missing architecture review inputs; not a normative compliance checker."},
-    {"name": "ucie_generate_sv_module_shell", "description": "Generate a declaration-only SystemVerilog module shell from a supplied port list."},
-    {"name": "ucie_generate_sva_skeleton", "description": "Generate an SVA skeleton using overlapped or non-overlapped implication."},
-    {"name": "ucie_generate_ready_valid_sva", "description": "Generate generic ready/valid hold assertions using next-cycle semantics; not a UCIe interface definition."},
-    {"name": "ucie_generate_uvm_testplan", "description": "Draft a verification plan from explicit feature and requirement records."},
-    {"name": "ucie_audit_traceability_matrix", "description": "Audit requirement-to-design-to-test traceability fields."},
-    {"name": "ucie_crc16_ccitt_false", "description": "Calculate generic CRC-16/CCITT-FALSE; not a UCIe-specific CRC implementation."}
+    {
+      "name": "ucie_validate_project_manifest",
+      "description": "Validate required structure and source/scope fields in a UCIe project manifest."
+    },
+    {
+      "name": "ucie_review_architecture_inputs",
+      "description": "Find missing architecture review inputs; not a normative compliance checker."
+    },
+    {
+      "name": "ucie_generate_sv_module_shell",
+      "description": "Generate a declaration-only SystemVerilog module shell from a supplied port list."
+    },
+    {
+      "name": "ucie_generate_sva_skeleton",
+      "description": "Generate an SVA skeleton using overlapped or non-overlapped implication."
+    },
+    {
+      "name": "ucie_generate_ready_valid_sva",
+      "description": "Generate generic ready/valid hold assertions using next-cycle semantics; not a UCIe interface definition."
+    },
+    {
+      "name": "ucie_generate_uvm_agent_skeleton",
+      "description": "Generate UVM transaction, sequence, sequencer, driver, monitor, and agent class shells from an explicit interface type and field list."
+    },
+    {
+      "name": "ucie_generate_uvm_testplan",
+      "description": "Draft a verification plan from explicit feature and requirement records."
+    },
+    {
+      "name": "ucie_audit_traceability_matrix",
+      "description": "Audit requirement-to-design-to-test traceability fields."
+    },
+    {
+      "name": "ucie_crc16_ccitt_false",
+      "description": "Calculate generic CRC-16/CCITT-FALSE; not a UCIe-specific CRC implementation."
+    }
   ],
   "tools_generated": false,
-  "keywords": ["UCIe", "chiplet", "SystemVerilog", "UVM", "SVA", "RTL", "verification", "MCP"],
+  "keywords": [
+    "UCIe",
+    "chiplet",
+    "SystemVerilog",
+    "UVM",
+    "SVA",
+    "RTL",
+    "verification",
+    "MCP"
+  ],
   "license": "MIT",
   "compatibility": {
     "claude_desktop": ">=1.0.0",
-    "platforms": ["darwin", "win32", "linux"],
-    "runtimes": {"python": ">=3.11,<4.0"}
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
+    "runtimes": {
+      "python": ">=3.11,<4.0"
+    }
   }
 }
