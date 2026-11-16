@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.1 — 2026-11-16
+
+- Fixed source/sink UVM generation to use the contract's actual valid, ready, clock, and payload signal names rather than default names.
+- Added regression tests for custom signal names in both agent roles.
+- Bumped MCP package and bundle version to 1.3.1.
+
+
 ## 1.3.0 — 2026-11-16
 
 - Added explicit generic ready/valid contract validation for source and sink roles.
