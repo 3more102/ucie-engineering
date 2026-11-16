@@ -18,7 +18,7 @@ else:
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("ucie-engineering")
-mcp = MCPServer("ucie-engineering", version="1.1.0")
+mcp = MCPServer("ucie-engineering", version="1.2.0")
 
 
 def _json_result(function, *args):
@@ -82,6 +82,15 @@ def ucie_generate_ready_valid_sva(
     except (ValueError, TypeError) as exc:
         return json.dumps({"status": "error", "error": str(exc)}, indent=2)
 
+
+
+@mcp.tool()
+def ucie_generate_uvm_agent_skeleton(agent_name: str, interface_type: str, fields_json: str) -> str:
+    """Generate UVM transaction, sequence, sequencer, driver, monitor, and agent class shells."""
+    try:
+        return core.generate_uvm_agent_skeleton(agent_name, interface_type, fields_json)
+    except (ValueError, TypeError) as exc:
+        return json.dumps({"status": "error", "error": str(exc)}, indent=2)
 
 @mcp.tool()
 def ucie_generate_uvm_testplan(features_json: str, scope_note: str = "") -> str:
