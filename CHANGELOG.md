@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.3 — 2026-11-17
+
+- Corrected sink-agent idle behavior: poll `try_next_item` at each drive edge and explicitly deassert ready when no sequence item is available.
+- Changed transaction-randomization failure from a recoverable UVM error to a fatal error so invalid stimulus is not sent.
+- Added generated-code syntax validation using the Slang SystemVerilog frontend for source/sink interfaces, SVA fragments, and UVM package syntax with macro stubs.
+- Added CI checks and regression tests for sink backpressure idle behavior.
+- Bumped MCP package and bundle version to 1.3.3.
+
+
 ## 1.3.2 — 2026-11-16
 
 - Hardened the release source archive to include only files committed in the Git tree, excluding untracked workspace files such as local `.env` files.

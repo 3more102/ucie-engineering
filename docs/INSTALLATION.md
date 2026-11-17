@@ -34,6 +34,10 @@ For Claude Desktop, merge mcp-server/config/claude_desktop_config.example.json i
 
 For Claude Code, copy mcp-server/config/.mcp.json.example to the project root as .mcp.json and update the absolute path. Do not commit machine-specific paths or secrets.
 
+## Generated SystemVerilog validation
+
+The CI pipeline installs the pinned Slang frontend (`pyslang==12.1.0`) and runs `python scripts/check_generated_sv.py`. This parses and elaborates the generated interface plus SVA fragments and syntax-parses the UVM package with minimal macro stubs. It is a syntax/static front-end check, not a substitute for compiling against the actual UVM library or simulating in Questa, VCS, Xcelium, or another supported simulator.
+
 ## Verification
 
 1. Run python -m unittest discover -s tests -v from mcp-server.

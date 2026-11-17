@@ -469,10 +469,13 @@ def generate_ready_valid_uvm_agent(contract_json: str) -> dict[str, Any]:
         extra_decl = ["    rand bit ready;"]
         extra_macro = [f"    {macro}uvm_field_int(ready, UVM_DEFAULT)"]
         driver_body = [
-            "      @(vif.drv_cb);", f"      vif.drv_cb.{ready} <= 1'b0;", "      forever begin",
-            "        seq_item_port.get_next_item(req_item);", "        @(vif.drv_cb);",
-            f"        vif.drv_cb.{ready} <= req_item.ready;", "        @(vif.mon_cb);",
-            "        seq_item_port.item_done();", "      end"
+            "      forever begin", "        @(vif.drv_cb);",
+            "        if (seq_item_port.try_next_item(req_item)) begin",
+            f"          vif.drv_cb.{ready} <= req_item.ready;",
+            "          @(vif.mon_cb);", "          seq_item_port.item_done();",
+            "        end else begin",
+            f"          vif.drv_cb.{ready} <= 1'b0;",
+            "        end", "      end"
         ]
     assertion_lines = [
         "// SVA include fragment: place inside the generated interface or another module/interface scope.",
@@ -519,7 +522,7 @@ def generate_ready_valid_uvm_agent(contract_json: str) -> dict[str, Any]:
         f'    function new(string name = "{sequence}"); super.new(name); endfunction',
         "    task body();", f"      {item} req_item;", f'      req_item = {item}::type_id::create("req_item");',
         "      start_item(req_item);",
-        f'      if (!req_item.randomize()) {macro}uvm_error("RAND", "Transaction randomization failed")',
+        f'      if (!req_item.randomize()) {macro}uvm_fatal("RAND", "Transaction randomization failed")',
         "      finish_item(req_item);", "    endtask", "  endclass", "",
         f"  class {driver} extends uvm_driver #({item});", f"    {macro}uvm_component_utils({driver})",
         f"    virtual {interface_name} vif;",

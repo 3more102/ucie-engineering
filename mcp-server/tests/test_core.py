@@ -87,6 +87,7 @@ class CoreTests(unittest.TestCase):
         self.assertIn("class fdi_tx_monitor extends uvm_monitor", result)
         self.assertIn("class fdi_tx_agent extends uvm_agent", result)
         self.assertIn("uvm_field_int(payload, UVM_DEFAULT)", result)
+        self.assertIn("if (!req_item.randomize()) `uvm_fatal", result)
         self.assertIn("virtual fdi_if vif", result)
         self.assertIn("TODO: implement run_phase", result)
 
@@ -167,6 +168,8 @@ class CoreTests(unittest.TestCase):
         self.assertIn("input clk, ready", result["interface_sv"])
         self.assertIn("rand bit ready;", result["package_sv"])
         self.assertIn("vif.drv_cb.ready <= req_item.ready;", result["package_sv"])
+        self.assertIn("seq_item_port.try_next_item(req_item)", result["package_sv"])
+        self.assertIn("vif.drv_cb.ready <= 1'b0;", result["package_sv"])
         self.assertIn("observed.ready = vif.mon_cb.ready;", result["package_sv"])
 
     def test_ready_valid_uvm_generator_uses_custom_signal_names(self):
