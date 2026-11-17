@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "feat/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run core unit tests
+        working-directory: mcp-server
+        env:
+          PYTHONPATH: .
+        run: python -m unittest discover -s tests -v
+      - name: Test release archive excludes untracked local files
+        run: python -m unittest discover -s scripts -p "test_*.py" -v
+      - name: Compile Python sources
+        run: python -m compileall -q mcp-server/ucie_mcp skill/ucie-engineering/scripts scripts
+      - name: Validate JSON manifests and examples
+        run: |
+          python -c "import json,pathlib; files=list(pathlib.Path('.').rglob('*.json')); [json.loads(p.read_text(encoding='utf-8')) for p in files if '.git' not in p.parts]; print(f'Validated {len(files)} JSON files')"
+      - name: Install pinned Slang Python frontend
+        if: matrix.python-version == '3.11'
+        run: python -m pip install "pyslang==12.1.0"
+      - name: Parse generated source/sink SystemVerilog and SVA
+        if: matrix.python-version == '3.11'
+        run: python scripts/check_generated_sv.py
+      - name: Checkout pinned Accellera UVM reference library
+        if: matrix.python-version == '3.11'
+        uses: actions/checkout@v4
+        with:
+          repository: accellera-official/uvm-core
+          ref: 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+          path: .ci/uvm-core
+      - name: Compile generated agents against Accellera UVM with Slang
+        if: matrix.python-version == '3.11'
+        run: python scripts/check_generated_uvm_compile.py --uvm-src .ci/uvm-core/src
+      - name: Build Claude Skill and source archives
+        run: python scripts/build_release.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate and package MCPB with official CLI
+        run: |
+          npm install -g @anthropic-ai/mcpb
+          mcpb validate mcp-server/manifest.json
+          mcpb pack mcp-server dist/ucie-engineering.mcpb
+      - name: Refresh checksums after final MCPB packaging
+        run: python scripts/write_checksums.py
+      - uses: astral-sh/setup-uv@v5
+        if: matrix.python-version == '3.11'
+        with:
+          enable-cache: true
+      - name: Install and smoke-test MCP runtime
+        if: matrix.python-version == '3.11'
+        working-directory: mcp-server
+        run: |
+          uv sync
+          uv run python -c "from ucie_mcp.server import mcp; print('MCP package import and tool registration OK')"
+          uv run python - <<'PY'
+          import importlib.util
+          from pathlib import Path
+          server_path = Path("ucie_mcp/server.py")
+          spec = importlib.util.spec_from_file_location("server_module", server_path)
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          assert module.mcp is not None
+          print("MCP Inspector direct-file import OK")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: matrix.python-version == '3.11'
+        with:
+          name: ucie-engineering-v1.3.5
+          path: |
+            dist/ucie-engineering-skill.zip
+            dist/ucie-engineering.mcpb
+            dist/ucie-claude-engineering-source.zip
+            dist/SHA256SUMS.txt

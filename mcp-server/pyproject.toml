@@ -1,0 +1,23 @@
+[project]
+name = "ucie-engineering-mcp"
+version = "1.3.5"
+description = "Local MCP utilities for source-grounded UCIe architecture, RTL, and verification workflows"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "UCIe Engineering Contributors" }]
+dependencies = ["mcp[cli]>=2.3.0,<3.0.0"]
+
+[project.scripts]
+ucie-mcp = "ucie_mcp.server:main"
+
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["ucie_mcp"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

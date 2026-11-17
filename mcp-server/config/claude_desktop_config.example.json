@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "ucie-engineering": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "ABSOLUTE_PATH_TO_REPOSITORY/mcp-server",
+        "ucie-mcp"
+      ]
+    }
+  }
+}

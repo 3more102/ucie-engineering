@@ -1,0 +1,58 @@
+{
+  "ports_json": [
+    {
+      "name": "clk",
+      "direction": "input"
+    },
+    {
+      "name": "rst_n",
+      "direction": "input"
+    },
+    {
+      "name": "valid",
+      "direction": "input"
+    },
+    {
+      "name": "ready",
+      "direction": "output"
+    },
+    {
+      "name": "payload",
+      "direction": "input",
+      "width": 128
+    }
+  ],
+  "sva": {
+    "property_name": "p_hold_payload_when_stalled",
+    "clock": "clk",
+    "antecedent": "valid && !ready",
+    "consequent": "$stable(payload)",
+    "disable_iff": "!rst_n",
+    "implication": "|=>"
+  },
+  "ready_valid_sva": {
+    "prefix": "fdi_tx",
+    "clock": "clk",
+    "valid": "valid",
+    "ready": "ready",
+    "payload": "payload",
+    "disable_iff": "!rst_n"
+  },
+  "crc16_ccitt_false_input": "313233343536373839",
+  "uvm_agent": {
+    "agent_name": "fdi_tx",
+    "interface_type": "fdi_if",
+    "fields": [
+      {
+        "name": "valid"
+      },
+      {
+        "name": "ready"
+      },
+      {
+        "name": "payload",
+        "width": 128
+      }
+    ]
+  }
+}
