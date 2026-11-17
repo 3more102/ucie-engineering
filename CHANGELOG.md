@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.4 — 2026-11-17
+
+- Added a Slang compile/type-check of both generated source and sink agents against the pinned Accellera UVM 2020.3.1 reference library.
+- CI checks actual UVM class APIs, factory macros, virtual-interface configuration, sequencer/driver connections, and generated package elaboration; no simulator execution is claimed.
+- Pinned the UVM reference source to commit `78c06547a2a0a29b3dc9dcafae62b75b2ff61544` for reproducible validation.
+- Bumped MCP package and bundle version to 1.3.4.
+
+
 ## 1.3.3 — 2026-11-17
 
 - Corrected sink-agent idle behavior: poll `try_next_item` at each drive edge and explicitly deassert ready when no sequence item is available.

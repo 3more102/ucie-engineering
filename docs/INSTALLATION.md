@@ -36,7 +36,7 @@ For Claude Code, copy mcp-server/config/.mcp.json.example to the project root as
 
 ## Generated SystemVerilog validation
 
-The CI pipeline installs the pinned Slang frontend (`pyslang==12.1.0`) and runs `python scripts/check_generated_sv.py`. This parses and elaborates the generated interface plus SVA fragments and syntax-parses the UVM package with minimal macro stubs. It is a syntax/static front-end check, not a substitute for compiling against the actual UVM library or simulating in Questa, VCS, Xcelium, or another supported simulator.
+The CI pipeline installs the pinned Slang frontend (`pyslang==12.1.0`), parses/elaborates generated interfaces and SVA, and compiles both generated agent packages against the Accellera UVM 2020.3.1 reference library at a pinned commit. This validates UVM API compatibility and elaboration, but does not run a dynamic simulation. Final project validation still requires simulator execution in Questa, VCS, Xcelium, or another supported simulator.
 
 ## Verification
 

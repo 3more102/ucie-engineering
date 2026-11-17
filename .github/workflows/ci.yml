@@ -35,6 +35,16 @@ jobs:
       - name: Parse generated source/sink SystemVerilog and SVA
         if: matrix.python-version == '3.11'
         run: python scripts/check_generated_sv.py
+      - name: Checkout pinned Accellera UVM reference library
+        if: matrix.python-version == '3.11'
+        uses: actions/checkout@v4
+        with:
+          repository: accellera-official/uvm-core
+          ref: 78c06547a2a0a29b3dc9dcafae62b75b2ff61544
+          path: .ci/uvm-core
+      - name: Compile generated agents against Accellera UVM with Slang
+        if: matrix.python-version == '3.11'
+        run: python scripts/check_generated_uvm_compile.py --uvm-src .ci/uvm-core/src
       - name: Build Claude Skill and source archives
         run: python scripts/build_release.py
       - uses: actions/setup-node@v4
@@ -70,7 +80,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: matrix.python-version == '3.11'
         with:
-          name: ucie-engineering-v1.3.3
+          name: ucie-engineering-v1.3.4
           path: |
             dist/ucie-engineering-skill.zip
             dist/ucie-engineering.mcpb

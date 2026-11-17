@@ -90,7 +90,7 @@ python -m unittest discover -s tests -v
 - ucie_generate_ready_valid_sva — generic next-cycle valid/payload hold assertions.
 - ucie_generate_uvm_agent_skeleton — basic UVM class shells.
 - ucie_validate_ready_valid_contract — validate an explicit generic ready/valid contract.
-- ucie_generate_ready_valid_uvm_agent — generate source/sink interface, UVM agent and generic stall assertions from that contract; sink agents deassert ready while idle.
+- ucie_generate_ready_valid_uvm_agent — generate source/sink interface, UVM agent and generic stall assertions from that contract; sink agents deassert ready while idle. CI also type-checks both generated agents against the pinned Accellera UVM reference library with Slang.
 - ucie_generate_uvm_testplan
 - ucie_audit_traceability_matrix
 - ucie_crc16_ccitt_false
