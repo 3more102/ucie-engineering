@@ -87,7 +87,6 @@ class CoreTests(unittest.TestCase):
         self.assertIn("class fdi_tx_monitor extends uvm_monitor", result)
         self.assertIn("class fdi_tx_agent extends uvm_agent", result)
         self.assertIn("uvm_field_int(payload, UVM_DEFAULT)", result)
-        self.assertIn("if (!req_item.randomize()) `uvm_fatal", result)
         self.assertIn("virtual fdi_if vif", result)
         self.assertIn("TODO: implement run_phase", result)
 
@@ -143,6 +142,7 @@ class CoreTests(unittest.TestCase):
     def test_ready_valid_uvm_source_agent_generation(self):
         result = core.generate_ready_valid_uvm_agent(json.dumps(self._ready_valid_contract("source")))
         self.assertEqual(result["status"], "generated")
+        self.assertIn("if (!req_item.randomize()) `uvm_fatal", result["package_sv"])
         self.assertIn("output valid, flit, opcode;", result["interface_sv"])
         self.assertIn("input ready;", result["interface_sv"])
         self.assertIn("input clk, valid, flit, opcode", result["interface_sv"])
