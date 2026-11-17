@@ -64,7 +64,7 @@ def check_interface_and_assertions(role: str, generated: dict) -> None:
     compilation = Compilation()
     compilation.addSyntaxTree(tree)
     diagnostics = compilation.getAllDiagnostics()
-    if compilation.hasIssuedErrors():
+    if compilation.hasIssuedErrors:
         fail_with_diagnostics(f"{role} interface + SVA", compilation.sourceManager, diagnostics)
 
 def check_uvm_package_syntax(role: str, generated: dict) -> None:
