@@ -470,11 +470,12 @@ def generate_ready_valid_uvm_agent(contract_json: str) -> dict[str, Any]:
         extra_macro = [f"    {macro}uvm_field_int(ready, UVM_DEFAULT)"]
         driver_body = [
             "      forever begin", "        @(vif.drv_cb);",
-            "        if (seq_item_port.try_next_item(req_item)) begin",
+            "        seq_item_port.try_next_item(req_item);",
+            "        if (req_item == null) begin",
+            f"          vif.drv_cb.{ready} <= 1'b0;",
+            "        end else begin",
             f"          vif.drv_cb.{ready} <= req_item.ready;",
             "          @(vif.mon_cb);", "          seq_item_port.item_done();",
-            "        end else begin",
-            f"          vif.drv_cb.{ready} <= 1'b0;",
             "        end", "      end"
         ]
     assertion_lines = [

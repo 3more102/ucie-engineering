@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.5 — 2026-11-17
+
+- Corrected sink-agent polling to match Accellera UVM 2020.3.1: `try_next_item` is a task, not a Boolean function; the driver now calls it and checks the returned request handle against `null`.
+- Retained explicit ready-low behavior when no request is available and the one-cycle ready pattern when a sink item is returned.
+- Added the Accellera UVM compile/type-check result as a release gate; this fix addresses the semantic error caught by that gate.
+- Bumped MCP package and bundle version to 1.3.5.
+
+
 ## 1.3.4 — 2026-11-17
 
 - Added a Slang compile/type-check of both generated source and sink agents against the pinned Accellera UVM 2020.3.1 reference library.

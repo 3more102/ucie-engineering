@@ -168,7 +168,8 @@ class CoreTests(unittest.TestCase):
         self.assertIn("input clk, ready", result["interface_sv"])
         self.assertIn("rand bit ready;", result["package_sv"])
         self.assertIn("vif.drv_cb.ready <= req_item.ready;", result["package_sv"])
-        self.assertIn("seq_item_port.try_next_item(req_item)", result["package_sv"])
+        self.assertIn("seq_item_port.try_next_item(req_item);", result["package_sv"])
+        self.assertIn("if (req_item == null) begin", result["package_sv"])
         self.assertIn("vif.drv_cb.ready <= 1'b0;", result["package_sv"])
         self.assertIn("observed.ready = vif.mon_cb.ready;", result["package_sv"])
 
